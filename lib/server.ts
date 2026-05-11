@@ -70,7 +70,8 @@ app.post('/report', async (req, res) => {
 
 app.get('/community', async (req, res) => {
   console.log('/community', req.query)
-  const communityAddress = req.query.communityAddress as string
+  const communityName = req.query.communityName as string
+  const communityPublicKey = req.query.communityPublicKey as string
 
   let sent = false
   const send = (string: string) => {
@@ -79,7 +80,7 @@ app.get('/community', async (req, res) => {
     res.send(string)
   }
 
-  const cached = communitiesCache[communityAddress]
+  const cached = communitiesCache[communityName]
   if (cached?.failedAt && cached.failedAt > Date.now() / 1000 - communityFailedCacheSeconds) {
     send(JSON.stringify({error: {message: `fetching community failed recently, not fetching will probably fail again: ${cached.error?.message}`}}))
     return
@@ -90,23 +91,25 @@ app.get('/community', async (req, res) => {
       setTimeout(() => {
         const error = {message: 'pkc.getCommunity timed out'}
         send(JSON.stringify({error}))
-        communitiesCache[communityAddress] = {failedAt: Math.round(Date.now() / 1000), error}
+        communitiesCache[communityName] = {failedAt: Math.round(Date.now() / 1000), error}
         fs.writeFileSync(communitiesCachePath, JSON.stringify(communitiesCache))
       }, 1000 * 120)
 
-      console.log(`${communityAddress} not cached, fetching...`)
-      const community = await (pkc as unknown as {getCommunity: (a: string) => Promise<unknown>}).getCommunity(communityAddress)
-      communitiesCache[communityAddress] = JSON.parse(JSON.stringify(community))
+      console.log(`${communityName} not cached, fetching...`)
+      const community = await (pkc as unknown as {
+        getCommunity: (a: {name: string; publicKey: string}) => Promise<unknown>
+      }).getCommunity({name: communityName, publicKey: communityPublicKey})
+      communitiesCache[communityName] = JSON.parse(JSON.stringify(community))
       fs.writeFileSync(communitiesCachePath, JSON.stringify(communitiesCache))
     } catch (e) {
       const error = {message: (e as Error).message}
       send(JSON.stringify({error}))
-      communitiesCache[communityAddress] = {failedAt: Math.round(Date.now() / 1000), error}
+      communitiesCache[communityName] = {failedAt: Math.round(Date.now() / 1000), error}
       fs.writeFileSync(communitiesCachePath, JSON.stringify(communitiesCache))
       return
     }
   }
-  send(JSON.stringify(communitiesCache[communityAddress] ?? null))
+  send(JSON.stringify(communitiesCache[communityName] ?? null))
 })
 
 const listen = (): Promise<Server> =>

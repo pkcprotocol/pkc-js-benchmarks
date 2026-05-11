@@ -27,16 +27,28 @@ export interface BaseBenchmarkOptions {
   pkcOptions: PkcOptions
 }
 
+export interface CommunityIdentifier {
+  name: string
+  publicKey: string
+}
+
+export interface CommentIdentifier {
+  cid: string
+  communityName: string
+  communityPublicKey: string
+}
+
 export interface CommunityListBenchmarkOptions extends BaseBenchmarkOptions {
-  communityAddresses: string[]
+  communities: CommunityIdentifier[]
 }
 
 export interface CommentListBenchmarkOptions extends BaseBenchmarkOptions {
-  commentCids: string[]
+  comments: CommentIdentifier[]
 }
 
 export interface PublishBenchmarkOptions extends BaseBenchmarkOptions {
-  communityAddress: string
+  communityName: string
+  communityPublicKey: string
 }
 
 export interface BenchmarkOptionsFile {

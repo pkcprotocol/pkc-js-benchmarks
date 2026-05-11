@@ -8,10 +8,6 @@ type PkcInput = Parameters<typeof PKC>[0]
 // `nameResolvers`. This helper preserves the legacy `chainProviders` shape in
 // benchmark-options.ts (so it stays JSON-serializable for the browser-fetch
 // path) and converts each URL into a BsoResolver instance at PKC-init time.
-//
-// Note: BsoResolver currently resolves only the `.bso` namespace. Benchmark
-// community addresses ending in `.eth` / `.sol` will return undefined from the
-// resolver until a matching .eth/.sol resolver is added alongside bso-resolver.
 export const buildPkcOptions = (legacy: PkcOptions): PkcInput => {
   const {chainProviders, resolveAuthorAddresses, pubsubKuboRpcClients, ...rest} = legacy
 

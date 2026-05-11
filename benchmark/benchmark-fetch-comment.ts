@@ -1,7 +1,7 @@
 import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
-import type {CommentListBenchmarkOptions, BenchmarkReport, CommentMetrics, Runtime} from '../types.ts'
+import type {CommentIdentifier, CommentListBenchmarkOptions, BenchmarkReport, CommentMetrics, Runtime} from '../types.ts'
 
 const benchmarkOptionsType = 'fetchCommentBenchmarkOptions'
 const benchmarkServerUrl = 'http://127.0.0.1:3000'
@@ -50,7 +50,7 @@ test('benchmark', async () => {
   const beforeReportTimestamp = Date.now()
   const reportComments: Record<string, CommentMetrics> = {}
 
-  const fetchComment = (commentCid: string): Promise<void> =>
+  const fetchComment = ({cid: commentCid, communityName, communityPublicKey}: CommentIdentifier): Promise<void> =>
     new Promise(async (resolve) => {
       reportComments[commentCid] = {
         fetchCommentIpfsTimeSeconds: null,
@@ -63,12 +63,13 @@ test('benchmark', async () => {
           on: (e: string, h: (arg: any) => void) => void
           update: () => void
           stop: () => Promise<void>
-          communityAddress?: string
+          communityName?: string
+          communityPublicKey?: string
           updatedAt?: number
         }>
-      }).createComment({cid: commentCid})
+      }).createComment({cid: commentCid, communityName, communityPublicKey})
       const getCommentUrlPath = () =>
-        comment.communityAddress ? `p/${comment.communityAddress}/c/${commentCid}` : `c/${commentCid}`
+        comment.communityName ? `p/${comment.communityName}/c/${commentCid}` : `c/${commentCid}`
 
       comment.on('error', (commentErrorEvent: Error) =>
         console.log('commentErrorEvent:', getCommentUrlPath(), commentErrorEvent.message),
@@ -121,7 +122,7 @@ test('benchmark', async () => {
 
   const fetchComments = async () => {
     console.log('fetching comments...')
-    const promises = benchmarkOptions.commentCids.map(fetchComment)
+    const promises = benchmarkOptions.comments.map(fetchComment)
     await Promise.all(promises)
     console.log('done fetching comments')
   }

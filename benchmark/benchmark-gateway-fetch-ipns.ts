@@ -2,7 +2,7 @@ import {test} from 'vitest'
 import {fromString as uint8ArrayFromString} from 'uint8arrays/from-string'
 import {toString as uint8ArrayToString} from 'uint8arrays/to-string'
 import {create as createMultihash} from 'multiformats/hashes/digest'
-import type {CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
+import type {CommunityIdentifier, CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
 
 const benchmarkOptionsType = 'gatewayFetchIpnsBenchmarkOptions'
 const benchmarkServerUrl = 'http://127.0.0.1:3000'
@@ -87,20 +87,20 @@ test('benchmark', async () => {
   const beforeReportTimestamp = Date.now()
   const reportCommunities: Record<string, CommunityMetrics> = {}
 
-  const fetchCommunity = async (communityAddress: string): Promise<void> => {
-    reportCommunities[communityAddress] = {fetchingIpnsTimeSeconds: null}
+  const fetchCommunity = async ({name: communityName, publicKey: communityPublicKey}: CommunityIdentifier): Promise<void> => {
+    reportCommunities[communityName] = {fetchingIpnsTimeSeconds: null}
     let community: CommunityRecord | undefined
     let error: Error | undefined
     try {
-      community = await fetch(`${benchmarkServerUrl}/community?communityAddress=${communityAddress}`).then((res) =>
-        res.json(),
-      )
+      community = await fetch(
+        `${benchmarkServerUrl}/community?communityName=${encodeURIComponent(communityName)}&communityPublicKey=${encodeURIComponent(communityPublicKey)}`,
+      ).then((res) => res.json())
     } catch (e) {
       error = e as Error
     }
     if (!community || community.error) {
       console.log(
-        `failed fetching ${communityAddress} from benchmark server with error: ${error?.message || community?.error?.message}`,
+        `failed fetching ${communityName} from benchmark server with error: ${error?.message || community?.error?.message}`,
       )
       return
     }
@@ -110,19 +110,19 @@ test('benchmark', async () => {
     try {
       const communityUpdate = await fetchWithTimeout(`${gatewayUrl}/ipns/${ipnsName}`).then((res) => res.json())
       if (communityUpdate.signature) {
-        reportCommunities[communityAddress]!.fetchingIpnsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
+        reportCommunities[communityName]!.fetchingIpnsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
         console.log(
-          `gateway fetched ipns ${communityAddress} in ${reportCommunities[communityAddress]!.fetchingIpnsTimeSeconds}s`,
+          `gateway fetched ipns ${communityName} in ${reportCommunities[communityName]!.fetchingIpnsTimeSeconds}s`,
         )
       }
     } catch (e) {
-      console.log(`failed gateway fetched ipns ${communityAddress}: ${(e as Error).message}`)
+      console.log(`failed gateway fetched ipns ${communityName}: ${(e as Error).message}`)
     }
   }
 
   const fetchCommunities = async () => {
     console.log('fetching communities...')
-    const promises = benchmarkOptions.communityAddresses.map(fetchCommunity)
+    const promises = benchmarkOptions.communities.map(fetchCommunity)
     await Promise.all(promises)
     console.log('done fetching communities')
   }

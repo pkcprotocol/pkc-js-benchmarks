@@ -53,9 +53,9 @@ test('benchmark', async () => {
   const beforeReportTimestamp = Date.now()
   const reportPublish: Record<string, CommunityMetrics> = {}
 
-  const publishComment = (communityAddress: string): Promise<void> =>
+  const publishComment = (communityName: string, communityPublicKey: string): Promise<void> =>
     new Promise(async (resolve) => {
-      reportPublish[communityAddress] = {
+      reportPublish[communityName] = {
         resolvingAddressTimeSeconds: null,
         fetchingIpnsTimeSeconds: null,
         challengeRequestTimeSeconds: null,
@@ -77,17 +77,18 @@ test('benchmark', async () => {
         }>
       }).createComment({
         signer,
-        communityAddress,
+        communityName,
+        communityPublicKey,
         title: `I am the pkc-js benchmark ${getRandomString()}`,
         content: `I am the pkc-js benchmark ${getRandomString()}`,
       })
       comment.on('error', (commentErrorEvent: Error) =>
-        console.log('commentErrorEvent:', communityAddress, commentErrorEvent.message),
+        console.log('commentErrorEvent:', communityName, commentErrorEvent.message),
       )
       comment.once('challenge', async () => {
-        reportPublish[communityAddress]!.challengeTimeSeconds = (Date.now() - beforeTimestamp) / 1000
+        reportPublish[communityName]!.challengeTimeSeconds = (Date.now() - beforeTimestamp) / 1000
         console.log(
-          `received challenge ${communityAddress} in ${reportPublish[communityAddress]!.challengeTimeSeconds}s`,
+          `received challenge ${communityName} in ${reportPublish[communityName]!.challengeTimeSeconds}s`,
         )
 
         console.log(`waiting ${publishChallengeAnswerDelay / 1000}s before publishing challenge answer...`)
@@ -96,58 +97,58 @@ test('benchmark', async () => {
         comment.publishChallengeAnswers(['pkc-js benchmark wrong answer'])
       })
       comment.once('challengeverification', () => {
-        reportPublish[communityAddress]!.challengeVerificationTimeSeconds =
+        reportPublish[communityName]!.challengeVerificationTimeSeconds =
           (Date.now() - beforeTimestamp) / 1000
         console.log(
-          `received challenge verification ${communityAddress} in ${reportPublish[communityAddress]!.challengeVerificationTimeSeconds}s`,
+          `received challenge verification ${communityName} in ${reportPublish[communityName]!.challengeVerificationTimeSeconds}s`,
         )
         resolve()
         comment.stop().catch(() => {})
       })
       comment.on('publishingstatechange', (publishingState: string) => {
-        const metrics = reportPublish[communityAddress]!
+        const metrics = reportPublish[communityName]!
         if (publishingState === 'resolving-community-address') {
           beforeTimestamp = Date.now()
         }
         if (publishingState === 'fetching-community-ipns') {
           if (metrics.resolvingAddressTimeSeconds) return
           metrics.resolvingAddressTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`resolved address ${communityAddress} in ${metrics.resolvingAddressTimeSeconds}s`)
+          console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)
         }
         if (publishingState === 'fetching-community-ipfs') {
           if (metrics.fetchingIpnsTimeSeconds) return
           metrics.fetchingIpnsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`fetched ipns ${communityAddress} in ${metrics.fetchingIpnsTimeSeconds}s`)
+          console.log(`fetched ipns ${communityName} in ${metrics.fetchingIpnsTimeSeconds}s`)
         }
         if (publishingState === 'publishing-challenge-request') {
           if (metrics.fetchingIpnsTimeSeconds) {
             metrics.fetchingIpfsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-            console.log(`fetched ipfs ${communityAddress} in ${metrics.fetchingIpfsTimeSeconds}s`)
+            console.log(`fetched ipfs ${communityName} in ${metrics.fetchingIpfsTimeSeconds}s`)
           } else {
             metrics.fetchingIpnsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-            console.log(`fetched ipns ${communityAddress} in ${metrics.fetchingIpnsTimeSeconds}s`)
+            console.log(`fetched ipns ${communityName} in ${metrics.fetchingIpnsTimeSeconds}s`)
           }
           beforeTimestamp = Date.now()
         }
         if (publishingState === 'waiting-challenge') {
           metrics.challengeRequestTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`published challenge request ${communityAddress} in ${metrics.challengeRequestTimeSeconds}s`)
+          console.log(`published challenge request ${communityName} in ${metrics.challengeRequestTimeSeconds}s`)
         }
         if (publishingState === 'waiting-challenge-verification') {
           metrics.challengeAnswerTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`published challenge answer ${communityAddress} in ${metrics.challengeAnswerTimeSeconds}s`)
+          console.log(`published challenge answer ${communityName} in ${metrics.challengeAnswerTimeSeconds}s`)
         }
         if (publishingState === 'failed') {
           // pkc-js bug, events aren't emitted in correct order so wait 100ms for all of them
           setTimeout(() => {
-            console.log(`failed publish ${communityAddress}`)
+            console.log(`failed publish ${communityName}`)
             resolve()
             comment.stop().catch(() => {})
           }, 100)
         }
         if (publishingState === 'waiting-retry') {
           setTimeout(() => {
-            console.log(`failed (waiting retry more than 10s)' publish ${communityAddress}`)
+            console.log(`failed (waiting retry more than 10s)' publish ${communityName}`)
             resolve()
             comment.stop().catch(() => {})
           }, 10000)
@@ -156,7 +157,7 @@ test('benchmark', async () => {
       comment.publish()
 
       setTimeout(() => {
-        console.log(`failed publish timed out 2min ${communityAddress}`)
+        console.log(`failed publish timed out 2min ${communityName}`)
         resolve()
         comment.stop().catch(() => {})
       }, 1000 * 60 * 2)
@@ -164,7 +165,7 @@ test('benchmark', async () => {
 
   const publish = async () => {
     console.log('publishing...')
-    await publishComment(benchmarkOptions.communityAddress)
+    await publishComment(benchmarkOptions.communityName, benchmarkOptions.communityPublicKey)
     console.log('done publishing')
   }
 

@@ -4,7 +4,7 @@ console.log('make sure to run with DEBUG=libp2p*,helia*,delegated*')
 import http from 'node:http'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
-import type {CommunityListBenchmarkOptions, CommunityMetrics} from '../types.ts'
+import type {CommunityIdentifier, CommunityListBenchmarkOptions, CommunityMetrics} from '../types.ts'
 
 const benchmarkOptions: CommunityListBenchmarkOptions = {
   name: 'libp2pJsClientsOptions',
@@ -31,7 +31,10 @@ const benchmarkOptions: CommunityListBenchmarkOptions = {
     validatePages: false,
     dataPath: '.pkc-benchmark',
   },
-  communityAddresses: ['censorship-watch.eth', 'fatpeoplehate.eth'],
+  communities: [
+    {name: 'politically-incorrect.bso', publicKey: '12D3KooWMVob74DQoTLGZ4B8kWgPwDfbtiWqdJE4DrGtf2rmVw36'},
+    {name: 'business-and-finance.bso', publicKey: '12D3KooWNMybS8JqELi38ZBX897PrjWbCrGoMKfw3bgoqzC2n1Dh'},
+  ],
 }
 
 const server = http.createServer(async (_req, res) => {
@@ -78,32 +81,32 @@ if (process.env.DEBUG) {
 
 const reportCommunities: Record<string, CommunityMetrics> = {}
 
-const fetchCommunity = (communityAddress: string): Promise<void> =>
+const fetchCommunity = ({name: communityName, publicKey: communityPublicKey}: CommunityIdentifier): Promise<void> =>
   new Promise(async (resolve) => {
-    reportCommunities[communityAddress] = {}
+    reportCommunities[communityName] = {}
     let beforeResolvingAddressTimestamp = Date.now()
     const community = await (pkc as unknown as {
       createCommunity: (a: unknown) => Promise<{
         on: (e: string, h: (arg: any) => void) => void
         update: () => void
       }>
-    }).createCommunity({address: communityAddress})
+    }).createCommunity({name: communityName, publicKey: communityPublicKey})
     community.on('error', (communityErrorEvent: Error) =>
-      console.log('communityErrorEvent:', communityAddress, communityErrorEvent.message),
+      console.log('communityErrorEvent:', communityName, communityErrorEvent.message),
     )
     community.on('updatingstatechange', (updatingState: string) => {
-      const metrics = reportCommunities[communityAddress]!
+      const metrics = reportCommunities[communityName]!
       if (updatingState === 'resolving-address') {
         beforeResolvingAddressTimestamp = Date.now()
       }
       if (updatingState === 'fetching-ipns') {
         if (metrics.resolvingAddressTimeSeconds) return
         metrics.resolvingAddressTimeSeconds = (Date.now() - beforeResolvingAddressTimestamp) / 1000
-        console.log(`resolved address ${communityAddress} in ${metrics.resolvingAddressTimeSeconds}s`)
+        console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)
       }
       if (updatingState === 'succeeded') {
         metrics.fetchingIpnsTimeSeconds = (Date.now() - beforeResolvingAddressTimestamp) / 1000
-        console.log(`fetched ipns ${communityAddress} in ${metrics.fetchingIpnsTimeSeconds}s`)
+        console.log(`fetched ipns ${communityName} in ${metrics.fetchingIpnsTimeSeconds}s`)
         resolve()
       }
       if (updatingState === 'failed') {
@@ -118,7 +121,7 @@ const fetchCommunity = (communityAddress: string): Promise<void> =>
 
 const fetchCommunities = async () => {
   console.log('fetching communities...')
-  const promises = benchmarkOptions.communityAddresses.map(fetchCommunity)
+  const promises = benchmarkOptions.communities.map(fetchCommunity)
   await Promise.all(promises)
   console.log('done fetching communities')
 }

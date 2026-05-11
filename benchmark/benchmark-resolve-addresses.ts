@@ -1,7 +1,7 @@
 import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
-import type {CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
+import type {CommunityIdentifier, CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
 
 const benchmarkOptionsType = 'resolveAddressesBenchmarkOptions'
 const benchmarkServerUrl = 'http://127.0.0.1:3000'
@@ -56,9 +56,9 @@ test('benchmark', async () => {
   const beforeReportTimestamp = Date.now()
   const reportCommunities: Record<string, CommunityMetrics> = {}
 
-  const fetchCommunity = (communityAddress: string): Promise<void> =>
+  const fetchCommunity = ({name: communityName, publicKey: communityPublicKey}: CommunityIdentifier): Promise<void> =>
     new Promise(async (resolve) => {
-      reportCommunities[communityAddress] = {resolvingAddressTimeSeconds: null}
+      reportCommunities[communityName] = {resolvingAddressTimeSeconds: null}
       let beforeTimestamp = 0
       const community = await (pkc as unknown as {
         createCommunity: (a: unknown) => Promise<{
@@ -66,29 +66,29 @@ test('benchmark', async () => {
           update: () => void
           stop: () => Promise<void>
         }>
-      }).createCommunity({address: communityAddress})
+      }).createCommunity({name: communityName, publicKey: communityPublicKey})
       community.on('error', (communityErrorEvent: Error) =>
-        console.log('communityErrorEvent:', communityAddress, communityErrorEvent.message),
+        console.log('communityErrorEvent:', communityName, communityErrorEvent.message),
       )
       community.on('updatingstatechange', (updatingState: string) => {
-        const metrics = reportCommunities[communityAddress]!
+        const metrics = reportCommunities[communityName]!
         if (updatingState === 'resolving-address') {
           beforeTimestamp = Date.now()
         }
         if (updatingState === 'fetching-ipns') {
           metrics.resolvingAddressTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`resolved address ${communityAddress} in ${metrics.resolvingAddressTimeSeconds}s`)
+          console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)
           community.stop().catch(() => {})
           resolve()
         }
         if (updatingState === 'failed') {
-          console.log(`failed resolving address ${communityAddress}`)
+          console.log(`failed resolving address ${communityName}`)
           resolve()
           community.stop().catch(() => {})
         }
         if (updatingState === 'waiting-retry') {
           setTimeout(() => {
-            console.log(`failed (waiting retry more than 10s)' resolving address ${communityAddress}`)
+            console.log(`failed (waiting retry more than 10s)' resolving address ${communityName}`)
             resolve()
             community.stop().catch(() => {})
           }, 10000)
@@ -97,7 +97,7 @@ test('benchmark', async () => {
       community.update()
 
       setTimeout(() => {
-        console.log(`failed resolving address timed out 2min ${communityAddress}`)
+        console.log(`failed resolving address timed out 2min ${communityName}`)
         resolve()
         community.stop().catch(() => {})
       }, 1000 * 60 * 2)
@@ -105,7 +105,7 @@ test('benchmark', async () => {
 
   const fetchCommunities = async () => {
     console.log('fetching communities...')
-    const promises = benchmarkOptions.communityAddresses.map(fetchCommunity)
+    const promises = benchmarkOptions.communities.map(fetchCommunity)
     await Promise.all(promises)
     console.log('done fetching communities')
   }

@@ -1,12 +1,19 @@
-import defaultCommunities080125 from './multisubs/default-communities-08-01-25.json' with {type: 'json'}
+import fiveChanDirectories from './multisubs/5chan-directories.json' with {type: 'json'}
 import type {
+  CommentIdentifier,
   CommentListBenchmarkOptions,
+  CommunityIdentifier,
   CommunityListBenchmarkOptions,
   PublishBenchmarkOptions,
   BenchmarkOptionsFile,
 } from './types.ts'
 
 const dataPath = '.pkc-benchmark'
+
+const communities: CommunityIdentifier[] = fiveChanDirectories.directories.map((d) => ({
+  name: d.name,
+  publicKey: d.publicKey,
+}))
 
 let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   {
@@ -17,7 +24,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'https://ethrpc.xyz',
@@ -27,7 +34,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'wss://ethrpc.xyz (possibly not cached)',
@@ -37,7 +44,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'wss://ethrpc.xyz',
@@ -47,7 +54,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'https://ethrpc.xyz, viem, ethers.js',
@@ -57,7 +64,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'viem',
@@ -67,7 +74,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'ethers.js',
@@ -77,7 +84,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.eth'))
+    communities
   },
   {
     name: 'https://solrpc.xyz',
@@ -87,7 +94,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.sol'))
+    communities
   },
   {
     // wss not yet implemented for sol rpc, low priority, did not improve speed in eth rpc
@@ -98,7 +105,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.sol'))
+    communities
   },
   {
     name: 'web3.js',
@@ -108,7 +115,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.sol'))
+    communities
   },
   {
     name: 'https://solrpc.xyz, web3.js',
@@ -118,7 +125,7 @@ let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address).filter(s => s.endsWith('.sol'))
+    communities
   }
 ]
 
@@ -135,7 +142,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://ipfsgateway.xyz',
@@ -149,7 +156,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://gateway.plebpubsub.xyz',
@@ -163,7 +170,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://gateway.forumindex.com',
@@ -177,7 +184,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://ipfsgateway.xyz, https://gateway.plebpubsub.xyz, https://gateway.forumindex.com',
@@ -191,7 +198,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'libp2p js client',
@@ -211,7 +218,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   }
 ]
 
@@ -234,7 +241,7 @@ let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
 //       validatePages: false,
 //       dataPath
 //     },
-//     communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+//     communities
 //   }
 // ]
 
@@ -243,24 +250,32 @@ let gatewayFetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   {
     name: 'https://ipfsgateway.xyz (gateway fetch only)',
     pkcOptions: {ipfsGatewayUrls: ['https://ipfsgateway.xyz']},
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://gateway.plebpubsub.xyz (gateway fetch only)',
     pkcOptions: {ipfsGatewayUrls: ['https://gateway.plebpubsub.xyz']},
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   },
   {
     name: 'https://gateway.forumindex.com (gateway fetch only)',
     pkcOptions: {ipfsGatewayUrls: ['https://gateway.forumindex.com']},
-    communityAddresses: defaultCommunities080125.communities.map(s => s.address)
+    communities
   }
 ]
 
 // TODO, post, reply, 10 posts/replies from different subs, 10 posts/replies from the same sub
-const postCid = 'QmQ5iZNEiiitJmefk1zRqYxa7fAuQo4vy3XAUy3UpUMhwG'
-const replyCid = 'QmWtN7Uue8Pw3Gg1V7csVjnsswpdJQbW3aHNk2gRfjPjig'
-const oneSub5Posts5Replies = [
+// CIDs below are stale (from previous .eth communities) and need to be regenerated for the
+// .bso communities they're paired with — kept as placeholders so the wiring/types remain valid.
+const oneSubCommunity = communities.find((c) => c.name === 'business-and-finance.bso')!
+const withCommunity = (cid: string, community: CommunityIdentifier): CommentIdentifier => ({
+  cid,
+  communityName: community.name,
+  communityPublicKey: community.publicKey,
+})
+const post: CommentIdentifier = withCommunity('QmQ5iZNEiiitJmefk1zRqYxa7fAuQo4vy3XAUy3UpUMhwG', oneSubCommunity)
+const reply: CommentIdentifier = withCommunity('QmWtN7Uue8Pw3Gg1V7csVjnsswpdJQbW3aHNk2gRfjPjig', oneSubCommunity)
+const oneSub5Posts5Replies: CommentIdentifier[] = [
   // posts
   'QmWuSQNZszHSPtwLmr41mS1drMnzCKfp7GLQUmdVg5aoZ1',
   'QmXdSw2ydiKLnMjxyEHQye7ZUa5cHQKmKiSMF9yRfMLkrs',
@@ -272,9 +287,9 @@ const oneSub5Posts5Replies = [
   'QmcPc94WwdtF2xzFojDvanQp7V3S4FChNrG1vXwbxamcp3',
   'QmfRNP1TC9B1R1AgoW4ts86ZsWuPNrhShedxJ3axzHQ3h9',
   'QmbAwAApoVfmRmxmSdHuMA9uDVL8pd13LGM1TTU4hSXDUX',
-  'QmZPfobp6UcroLtPiiAFgsAQX8RQh3WwfiCbzyHi22rBRR'
-]
-const tenSubs5Posts5Replies = [
+  'QmZPfobp6UcroLtPiiAFgsAQX8RQh3WwfiCbzyHi22rBRR',
+].map((cid) => withCommunity(cid, oneSubCommunity))
+const tenSubs5Posts5Replies: CommentIdentifier[] = [
   // posts
   'QmYZiS4uDR6S2vC65fmpktjH3mBn27gk3c4HkFEpf3SN61',
   'QmcYV2yoSkXazG9puqHPbApfVg6FfmrHp3tSCyNz9CBLci',
@@ -286,8 +301,8 @@ const tenSubs5Posts5Replies = [
   'QmNoNxFkEgM65ATGsL38cufuuNJx5UdNawmMAudkdwjhf1',
   'QmaaGTw5WzTFz4SMc4C4CdK7FDtaAT9yFUYekHErELXdgi',
   'QmPfjpbDqo9kEWe5gBpL9BeYUPU5GBVp17W763zyuz8JMi',
-  'QmUTCSKiiTunWECvLRiJfxotUmNfanJyjRR8Tjq5pr1YLK'
-]
+  'QmUTCSKiiTunWECvLRiJfxotUmNfanJyjRR8Tjq5pr1YLK',
+].map((cid, i) => withCommunity(cid, communities[i % communities.length]!))
 let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
   {
     name: 'ipfsgateway.xyz (1 post)',
@@ -301,7 +316,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: [postCid]
+    comments: [post]
   },
   {
     name: 'ipfsgateway.xyz (1 reply)',
@@ -315,7 +330,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: [replyCid]
+    comments: [reply]
   },
   {
     name: 'ipfsgateway.xyz (1 sub, 5 posts, 5 replies)',
@@ -329,7 +344,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: oneSub5Posts5Replies
+    comments: oneSub5Posts5Replies
   },
   {
     name: 'ipfsgateway.xyz (10 subs, 5 posts, 5 replies)',
@@ -343,7 +358,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: tenSubs5Posts5Replies
+    comments: tenSubs5Posts5Replies
   },
   {
     name: 'libp2p js client (1 post)',
@@ -363,7 +378,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: [postCid]
+    comments: [post]
   },
   {
     name: 'libp2p js client (1 reply)',
@@ -383,7 +398,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: [replyCid]
+    comments: [reply]
   },
   {
     name: 'libp2p js client (1 sub, 5 posts, 5 replies)',
@@ -403,7 +418,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: oneSub5Posts5Replies
+    comments: oneSub5Posts5Replies
   },
   {
     name: 'libp2p js client (10 subs, 5 posts, 5 replies)',
@@ -423,7 +438,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    commentCids: tenSubs5Posts5Replies
+    comments: tenSubs5Posts5Replies
   }
 ]
 
@@ -446,9 +461,11 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
 //       validatePages: false,
 //       dataPath
 //     },
-//     commentCids: [replyCid]
+//     comments: [reply]
 //   }
 // ]
+
+const publishCommunity = communities.find((c) => c.name === 'business-and-finance.bso')!
 
 let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
   {
@@ -463,7 +480,8 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddress: 'business-and-finance.eth'
+    communityName: publishCommunity.name,
+    communityPublicKey: publishCommunity.publicKey
   },
   {
     name: 'https://plebpubsub.xyz',
@@ -477,7 +495,8 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddress: 'business-and-finance.eth'
+    communityName: publishCommunity.name,
+    communityPublicKey: publishCommunity.publicKey
   },
   {
     name: 'libp2p js client',
@@ -497,7 +516,8 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    communityAddress: 'business-and-finance.eth'
+    communityName: publishCommunity.name,
+    communityPublicKey: publishCommunity.publicKey
   }
 ]
 
