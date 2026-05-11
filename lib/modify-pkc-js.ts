@@ -1,14 +1,13 @@
-// can use this file to modify pkc-js in node modules
+import {fileURLToPath} from 'node:url'
+import path from 'node:path'
 
-import fs from 'fs-extra'
-import {fileURLToPath} from 'url'
-import path from 'path'
 const rootPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const pkcJsDistPath = path.join(rootPath, 'node_modules/@pkcprotocol/pkc-js/dist')
 
-const runtimes = ['node', 'browser']
+const runtimes = ['node', 'browser'] as const
 for (const runtime of runtimes) {
   const pkcJsRootPath = path.join(pkcJsDistPath, runtime)
+  void pkcJsRootPath
 
   // add websocket transport to viem
   // const resolverPath = path.join(pkcJsRootPath, 'resolver.js')

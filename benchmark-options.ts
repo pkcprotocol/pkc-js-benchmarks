@@ -1,8 +1,14 @@
 import defaultCommunities080125 from './multisubs/default-communities-08-01-25.json' with {type: 'json'}
+import type {
+  CommentListBenchmarkOptions,
+  CommunityListBenchmarkOptions,
+  PublishBenchmarkOptions,
+  BenchmarkOptionsFile,
+} from './types.ts'
 
 const dataPath = '.pkc-benchmark'
 
-let resolveAddressesBenchmarkOptions = [
+let resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   {
     name: 'https://ethrpc.xyz (possibly not cached)',
     pkcOptions: {
@@ -116,7 +122,7 @@ let resolveAddressesBenchmarkOptions = [
   }
 ]
 
-let fetchIpnsBenchmarkOptions = [
+let fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   {
     name: 'https://ipfsgateway.xyz (possibly not cached)',
     pkcOptions: {
@@ -233,7 +239,7 @@ let fetchIpnsBenchmarkOptions = [
 // ]
 
 // only fetches the first gateway
-let gatewayFetchIpnsBenchmarkOptions = [
+let gatewayFetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   {
     name: 'https://ipfsgateway.xyz (gateway fetch only)',
     pkcOptions: {ipfsGatewayUrls: ['https://ipfsgateway.xyz']},
@@ -282,7 +288,7 @@ const tenSubs5Posts5Replies = [
   'QmPfjpbDqo9kEWe5gBpL9BeYUPU5GBVp17W763zyuz8JMi',
   'QmUTCSKiiTunWECvLRiJfxotUmNfanJyjRR8Tjq5pr1YLK'
 ]
-let fetchCommentBenchmarkOptions = [
+let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
   {
     name: 'ipfsgateway.xyz (1 post)',
     pkcOptions: {
@@ -444,7 +450,7 @@ let fetchCommentBenchmarkOptions = [
 //   }
 // ]
 
-let publishBenchmarkOptions = [
+let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
   {
     name: 'https://pubsubprovider.xyz',
     pkcOptions: {
@@ -495,4 +501,11 @@ let publishBenchmarkOptions = [
   }
 ]
 
-export default {resolveAddressesBenchmarkOptions, fetchIpnsBenchmarkOptions, gatewayFetchIpnsBenchmarkOptions, fetchCommentBenchmarkOptions, publishBenchmarkOptions}
+const benchmarkOptions: BenchmarkOptionsFile = {
+  resolveAddressesBenchmarkOptions,
+  fetchIpnsBenchmarkOptions,
+  gatewayFetchIpnsBenchmarkOptions,
+  fetchCommentBenchmarkOptions,
+  publishBenchmarkOptions,
+}
+export default benchmarkOptions
