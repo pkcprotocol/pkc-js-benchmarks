@@ -63,7 +63,7 @@ test('benchmark', async () => {
         challengeAnswerTimeSeconds: null,
         challengeVerificationTimeSeconds: null,
       }
-      let beforeTimestamp = 0
+      let beforeTimestamp = Date.now()
 
       const getRandomString = () => (Math.random() + 1).toString(36).replace('.', '')
       const signer = await (pkc as unknown as {createSigner: () => Promise<unknown>}).createSigner()

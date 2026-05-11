@@ -1,7 +1,4 @@
 import {test} from 'vitest'
-import {fromString as uint8ArrayFromString} from 'uint8arrays/from-string'
-import {toString as uint8ArrayToString} from 'uint8arrays/to-string'
-import {create as createMultihash} from 'multiformats/hashes/digest'
 import type {CommunityIdentifier, CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
 
 const benchmarkOptionsType = 'gatewayFetchIpnsBenchmarkOptions'
@@ -21,17 +18,6 @@ try {
   // not in a browser
 }
 
-const protobufPublicKeyPrefix = new Uint8Array([8, 1, 18, 32])
-const multihashIdentityCode = 0
-export const getPkcAddressFromPublicKey = (publicKeyBase64: string): string => {
-  const publicKeyBuffer = uint8ArrayFromString(publicKeyBase64, 'base64')
-  const publicKeyBufferWithPrefix = new Uint8Array(protobufPublicKeyPrefix.length + publicKeyBuffer.length)
-  publicKeyBufferWithPrefix.set(protobufPublicKeyPrefix, 0)
-  publicKeyBufferWithPrefix.set(publicKeyBuffer, protobufPublicKeyPrefix.length)
-  const multihash = createMultihash(multihashIdentityCode, publicKeyBufferWithPrefix).bytes
-  return uint8ArrayToString(multihash, 'base58btc')
-}
-
 async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 1000 * 120)
@@ -47,11 +33,6 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
     clearTimeout(timeout)
     throw error
   }
-}
-
-interface CommunityRecord {
-  signature: {publicKey: string}
-  error?: {message: string}
 }
 
 test('benchmark', async () => {
@@ -89,26 +70,9 @@ test('benchmark', async () => {
 
   const fetchCommunity = async ({name: communityName, publicKey: communityPublicKey}: CommunityIdentifier): Promise<void> => {
     reportCommunities[communityName] = {fetchingIpnsTimeSeconds: null}
-    let community: CommunityRecord | undefined
-    let error: Error | undefined
-    try {
-      community = await fetch(
-        `${benchmarkServerUrl}/community?communityName=${encodeURIComponent(communityName)}&communityPublicKey=${encodeURIComponent(communityPublicKey)}`,
-      ).then((res) => res.json())
-    } catch (e) {
-      error = e as Error
-    }
-    if (!community || community.error) {
-      console.log(
-        `failed fetching ${communityName} from benchmark server with error: ${error?.message || community?.error?.message}`,
-      )
-      return
-    }
-
-    const ipnsName = getPkcAddressFromPublicKey(community.signature.publicKey)
     const beforeTimestamp = Date.now()
     try {
-      const communityUpdate = await fetchWithTimeout(`${gatewayUrl}/ipns/${ipnsName}`).then((res) => res.json())
+      const communityUpdate = await fetchWithTimeout(`${gatewayUrl}/ipns/${communityPublicKey}`).then((res) => res.json())
       if (communityUpdate.signature) {
         reportCommunities[communityName]!.fetchingIpnsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
         console.log(

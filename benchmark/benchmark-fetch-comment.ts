@@ -57,7 +57,7 @@ test('benchmark', async () => {
         resolvingCommunityAddressTimeSeconds: null,
         fetchingCommentUpdateTimeSeconds: null,
       }
-      let beforeTimestamp = 0
+      let beforeTimestamp = Date.now()
       const comment = await (pkc as unknown as {
         createComment: (a: unknown) => Promise<{
           on: (e: string, h: (arg: any) => void) => void

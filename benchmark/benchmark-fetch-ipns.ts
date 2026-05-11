@@ -56,7 +56,7 @@ test('benchmark', async () => {
         resolvingAddressTimeSeconds: null,
         fetchingIpnsTimeSeconds: null,
       }
-      let beforeTimestamp = 0
+      let beforeTimestamp = Date.now()
       const community = await (pkc as unknown as {
         createCommunity: (a: unknown) => Promise<{
           on: (e: string, h: (arg: any) => void) => void
