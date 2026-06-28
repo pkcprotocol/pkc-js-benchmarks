@@ -85,9 +85,33 @@
       '#ce93d8', '#80deea', '#fdd835', '#bcaaa4',
     ];
 
+    // Map pkc-js commit hashes -> published npm versions via each version's gitHead.
+    // Fetched live so newly published versions appear automatically; commits with no
+    // published version (pre-release or dev-between-releases) fall back to a short hash.
+    async function fetchCommitToVersion() {
+      try {
+        const res = await fetch('https://registry.npmjs.org/@pkcprotocol%2fpkc-js');
+        const versions = (await res.json()).versions || {};
+        const map = {};
+        for (const [version, meta] of Object.entries(versions)) {
+          if (meta && meta.gitHead) map[meta.gitHead] = version;
+        }
+        return map;
+      } catch (e) {
+        console.warn('could not fetch pkc-js versions, falling back to commit hashes', e);
+        return {};
+      }
+    }
+
     async function run() {
-      const res = await fetch('https://raw.githubusercontent.com/pkcprotocol/pkc-js-benchmarks/refs/heads/master/reports/all.json');
+      const [res, commitToVersion] = await Promise.all([
+        fetch('https://raw.githubusercontent.com/pkcprotocol/pkc-js-benchmarks/refs/heads/master/reports/all.json'),
+        fetchCommitToVersion(),
+      ]);
       const data = (await res.json()).flat();
+
+      // Label a commit by its published pkc-js version when known, else a short hash.
+      const commitLabel = (hash) => (commitToVersion[hash] ? 'v' + commitToVersion[hash] : (hash || 'unknown').slice(0, 7));
 
       // Group by type, then name, then runtime
       const grouped = {};
@@ -230,7 +254,7 @@
             new Chart(ctx, {
               type: 'bar',
               data: {
-                labels: commitsSorted.map(c => c.slice(0,7)), // short commit hashes
+                labels: commitsSorted.map(commitLabel), // pkc-js version, or short commit hash if unpublished
                 datasets: datasets
               },
               options: {
@@ -247,9 +271,11 @@
                         if (ctx.length > 0) {
                           const idx = ctx[0].dataIndex;
                           const fullHash = commitsSorted[idx];
+                          const version = commitToVersion[fullHash];
                           const ts = commitTimestampMap[fullHash];
                           const dateStr = new Date(ts).toLocaleString();
-                          return `Commit: ${fullHash}\nDate: ${dateStr}`;
+                          const versionLine = version ? `Version: v${version}\n` : '';
+                          return `${versionLine}Commit: ${fullHash}\nDate: ${dateStr}`;
                         }
                         return '';
                       },
@@ -261,7 +287,7 @@
                 },
                 scales: {
                   x: {
-                    title: { display: true, text: 'Commit', color: '#ddd' },
+                    title: { display: true, text: 'pkc-js version', color: '#ddd' },
                     ticks: { color: '#bbb', maxRotation: 90, minRotation: 45, autoSkip: false },
                     grid: { color: 'rgba(255,255,255,0.1)' },
                     stacked: true,
