@@ -105,6 +105,31 @@ type ReportType = 'comment' | 'publish' | 'community'
 const benchmarkTypeToReportType = (benchmarkType: string): ReportType =>
   benchmarkType.match(/comment/i) ? 'comment' : benchmarkType.match(/publish/i) ? 'publish' : 'community'
 
+// load-communities carries aggregate peer/transport/phase data that doesn't fit the
+// per-metric median/average table — print it as a block under the benchmark.
+const printLoadCommunitiesAggregates = (benchmark: BenchmarkReport): void => {
+  if (benchmark.discoveredCount === undefined && benchmark.finalNet === undefined) return
+  const loaded = benchmark.loadedCount ?? 0
+  const discovered = benchmark.discoveredCount ?? 0
+  const attempted = Object.keys(benchmark.communities ?? {}).length
+  console.log(`  ${benchmark.name} (${benchmark.runtime}): loaded ${loaded}/${attempted} attempted (${discovered} discovered)`)
+  if (benchmark.finalNet) {
+    const n = benchmark.finalNet
+    console.log(`    final peers: ${n.peers} (browser-usable=${n.browserUsablePeers}) ${JSON.stringify(n.byTransport)}`)
+  }
+  if (benchmark.deniedDials) {
+    console.log(`    denied non-browser dials: ${benchmark.deniedDials.count} ${JSON.stringify(benchmark.deniedDials.byTransport)}`)
+  }
+  if (benchmark.phaseBreakdown && Object.keys(benchmark.phaseBreakdown).length) {
+    const total = Object.values(benchmark.phaseBreakdown).reduce((a, b) => a + b, 0) || 1
+    const phases = Object.entries(benchmark.phaseBreakdown)
+      .sort((a, b) => b[1] - a[1])
+      .map(([state, secs]) => `${state}=${secs.toFixed(2)}s(${((secs / total) * 100).toFixed(0)}%)`)
+      .join(' ')
+    console.log(`    phase breakdown: ${phases}`)
+  }
+}
+
 if (format === 'table') {
   for (const benchmarkType in benchmarkTypes) {
     const table: Record<string, Record<string, unknown>> = {}
@@ -145,6 +170,15 @@ if (format === 'table') {
             median: getMedian(communities, 'fetchingIpfsTimeSeconds'),
             average: getAverage(communities, 'fetchingIpfsTimeSeconds'),
             success: getSuccessRatio(communities, 'fetchingIpfsTimeSeconds'),
+          }
+        }
+        if (hasTimePropName(communities, 'totalLoadTimeSeconds')) {
+          table[getNextRowName()] = {
+            runtime: benchmark.runtime,
+            benchmark: 'total load time',
+            median: getMedian(communities, 'totalLoadTimeSeconds'),
+            average: getAverage(communities, 'totalLoadTimeSeconds'),
+            success: getSuccessRatio(communities, 'totalLoadTimeSeconds'),
           }
         }
       }
@@ -219,6 +253,9 @@ if (format === 'table') {
       }
     }
     console.table(table)
+    if (benchmarkType === 'loadCommunitiesBenchmarkOptions') {
+      for (const benchmark of benchmarkTypes[benchmarkType]!) printLoadCommunitiesAggregates(benchmark)
+    }
   }
 }
 
@@ -258,6 +295,17 @@ if (format === 'inline') {
               `| average ${getAverage(communities, 'fetchCommentIpfsTimeSeconds' as MetricKey)}s`.padEnd(pad) +
               `| success ${getSuccessRatio(communities, 'fetchCommentIpfsTimeSeconds' as MetricKey)}`,
           )
+        }
+        if (hasTimePropName(communities, 'totalLoadTimeSeconds')) {
+          console.log(
+            'total load:'.padEnd(pad) +
+              `median ${getMedian(communities, 'totalLoadTimeSeconds')}s`.padEnd(pad) +
+              `| average ${getAverage(communities, 'totalLoadTimeSeconds')}s`.padEnd(pad) +
+              `| success ${getSuccessRatio(communities, 'totalLoadTimeSeconds')}`,
+          )
+        }
+        if (benchmark.type === 'loadCommunitiesBenchmarkOptions') {
+          printLoadCommunitiesAggregates(benchmark)
         }
       }
       if (reportType === 'comment') {

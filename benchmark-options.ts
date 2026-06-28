@@ -4,6 +4,7 @@ import type {
   CommentListBenchmarkOptions,
   CommunityIdentifier,
   CommunityListBenchmarkOptions,
+  LoadCommunitiesBenchmarkOptions,
   PublishBenchmarkOptions,
   BenchmarkOptionsFile,
 } from './types.ts'
@@ -521,11 +522,48 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
   }
 ]
 
+// load-communities: load EVERY production 5chan board (discovered live from GitHub at
+// runtime — see lib/discover-communities.ts, nothing hardcoded) over Helia/libp2p-js in
+// pure-P2P browser mode, measuring per-community load time + peer/transport reachability.
+//
+// The config axis is generated as a cartesian product so the matrix is easy to widen; the
+// node/chrome runtime axis is applied orthogonally by start.ts (run with no --runtime to
+// execute every cell). Base pkcOptions copied from the 'libp2p js client' fetchIpns entry:
+// libp2p-js client + production http routers, no dataPath (fresh in-memory each run).
+const loadCommunitiesHttpRouters = [
+  'https://routing.lol',
+  'https://peers.pleb.bot',
+  'https://peers.plebpubsub.xyz',
+  'https://peers.forumindex.com'
+]
+const loadCommunitiesBasePkcOptions = {
+  libp2pJsClientsOptions: [{key: 'libp2pjs'}],
+  httpRoutersOptions: loadCommunitiesHttpRouters,
+  resolveAuthorAddresses: false,
+  validatePages: false
+}
+
+// config-matrix dimensions (widen by adding values here)
+const loadCommunitiesDimensions = {
+  concurrency: [1, 4], // 1 = clean per-phase timing; 4 = parallel load (concurrency can starve the small browser mesh)
+}
+const loadCommunitiesSmokeLimit = process.env.LOAD_COMMUNITIES_LIMIT ? Number(process.env.LOAD_COMMUNITIES_LIMIT) : undefined
+const loadCommunitiesBenchmarkOptions: LoadCommunitiesBenchmarkOptions[] = loadCommunitiesDimensions.concurrency.map(
+  (concurrency) => ({
+    name: `libp2pjs concurrency=${concurrency}`,
+    pkcOptions: {...loadCommunitiesBasePkcOptions},
+    concurrency,
+    countNonBrowserDials: true,
+    ...(loadCommunitiesSmokeLimit ? {limit: loadCommunitiesSmokeLimit} : {}),
+  })
+)
+
 const benchmarkOptions: BenchmarkOptionsFile = {
   resolveAddressesBenchmarkOptions,
   fetchIpnsBenchmarkOptions,
   gatewayFetchIpnsBenchmarkOptions,
   fetchCommentBenchmarkOptions,
   publishBenchmarkOptions,
+  loadCommunitiesBenchmarkOptions,
 }
 export default benchmarkOptions

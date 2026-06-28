@@ -14,6 +14,9 @@ export default defineConfig({
       provider: playwright({
         launchOptions: {
           args: ['--disable-web-security', '--no-sandbox'],
+          // allow pointing at a system chromium when Playwright can't manage its own
+          // (e.g. PLAYWRIGHT_CHROMIUM_PATH=/snap/bin/chromium)
+          ...(process.env.PLAYWRIGHT_CHROMIUM_PATH ? {executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH} : {}),
         },
       }),
       headless: true,

@@ -164,6 +164,23 @@ if (isBenchmark('resolve-addresses')) {
   }
 }
 
+if (isBenchmark('load-communities')) {
+  console.log('benchmarking load-communities...')
+  const benchmarkFile = 'benchmark-load-communities.ts'
+  if (isRuntime('node')) {
+    for (const benchmarkOptions of benchmarkOptionsFile.loadCommunitiesBenchmarkOptions) {
+      const dp = (benchmarkOptions.pkcOptions as {dataPath?: string}).dataPath
+      if (dp) fs.removeSync(dp)
+      await benchmarkNode(benchmarkFile, benchmarkOptions)
+    }
+  }
+  if (isRuntime('chrome')) {
+    for (const benchmarkOptions of benchmarkOptionsFile.loadCommunitiesBenchmarkOptions) {
+      await benchmarkChrome(benchmarkFile, benchmarkOptions)
+    }
+  }
+}
+
 if (isBenchmark('gateway-fetch-ipns')) {
   console.log('benchmarking gateway-fetch-ipns...')
   const benchmarkFile = 'benchmark-gateway-fetch-ipns.ts'
