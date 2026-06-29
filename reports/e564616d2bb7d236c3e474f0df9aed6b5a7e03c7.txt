@@ -1,0 +1,232 @@
+┌───────────────────────────────┬──────────┬──────────────────────────┬────────┬─────────┬─────────┐
+│ (index)                       │ runtime  │ benchmark                │ median │ average │ success │
+├───────────────────────────────┼──────────┼──────────────────────────┼────────┼─────────┼─────────┤
+│ PUBLISH                       │          │                          │        │         │         │
+│                               │          │                          │        │         │         │
+│                               │          │                          │        │         │         │
+│ https://pubsubprovider.xyz    │          │                          │        │         │         │
+│                               │ 'node'   │ 'challenge request'      │ 0.957  │ 0.957   │ '1/1'   │
+│                               │ 'node'   │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge verification' │ 5.084  │ 5.084   │ '1/1'   │
+│                               │ 'chrome' │ 'challenge request'      │ 0.593  │ 0.593   │ '1/1'   │
+│                               │ 'chrome' │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge verification' │ 9.148  │ 9.148   │ '1/1'   │
+│ https://plebpubsub.xyz        │          │                          │        │         │         │
+│                               │ 'node'   │ 'challenge request'      │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge verification' │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge request'      │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge verification' │ NaN    │ NaN     │ '0/1'   │
+│ libp2p js client              │          │                          │        │         │         │
+│                               │ 'node'   │ 'challenge request'      │ 0.008  │ 0.008   │ '1/1'   │
+│                               │ 'node'   │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'node'   │ 'challenge verification' │ 0.192  │ 0.192   │ '1/1'   │
+│                               │ 'chrome' │ 'challenge request'      │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                               │ 'chrome' │ 'challenge verification' │ NaN    │ NaN     │ '0/1'   │
+└───────────────────────────────┴──────────┴──────────────────────────┴────────┴─────────┴─────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                                                                                 │ runtime  │ benchmark         │ median │ average │ success │
+├─────────────────────────────────────────────────────────────────────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ FETCH IPNS                                                                              │          │                   │        │         │         │
+│                                                                                         │          │                   │        │         │         │
+│                                                                                         │          │                   │        │         │         │
+│ https://ipfsgateway.xyz (possibly not cached)                                           │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.053  │ 0.053   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ 2.393  │ 2.495   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.049  │ 0.049   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ 1.454  │ 1.485   │ '28/28' │
+│ https://ipfsgateway.xyz                                                                 │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.057  │ 0.056   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ 1.909  │ 2.019   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.044  │ 0.045   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ 1.517  │ 1.567   │ '28/28' │
+│ https://gateway.plebpubsub.xyz                                                          │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.052  │ 0.052   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ 1.518  │ 1.538   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.051  │ 0.051   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ 1.163  │ 1.162   │ '28/28' │
+│ https://gateway.forumindex.com                                                          │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.053  │ 0.053   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.044  │ 0.045   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ https://ipfsgateway.xyz, https://gateway.plebpubsub.xyz, https://gateway.forumindex.com │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.061  │ 0.061   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ 2.01   │ 2.022   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.054  │ 0.051   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ 1.184  │ 1.199   │ '28/28' │
+│ libp2p js client                                                                        │          │                   │        │         │         │
+│                                                                                         │ 'node'   │ 'resolve address' │ 0.086  │ 0.086   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipns'      │ 1.571  │ 1.686   │ '28/28' │
+│                                                                                         │ 'node'   │ 'fetch ipfs'      │ 3.712  │ 3.627   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'resolve address' │ 0.056  │ 0.054   │ '28/28' │
+│                                                                                         │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+└─────────────────────────────────────────────────────────────────────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+┌────────────────────────────────────────────────────────────┬──────────┬─────────────────────────────┬────────┬─────────┬─────────┐
+│ (index)                                                    │ runtime  │ benchmark                   │ median │ average │ success │
+├────────────────────────────────────────────────────────────┼──────────┼─────────────────────────────┼────────┼─────────┼─────────┤
+│ FETCH COMMENT                                              │          │                             │        │         │         │
+│                                                            │          │                             │        │         │         │
+│                                                            │          │                             │        │         │         │
+│ ipfsgateway.xyz (1 post)                                   │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│ ipfsgateway.xyz (1 reply)                                  │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│ ipfsgateway.xyz (1 sub, 5 posts, 5 replies)                │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│ ipfsgateway.xyz (10 subs, 5 posts, 5 replies)              │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│ libp2p js client (1 post)                                  │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│ libp2p js client (1 reply)                                 │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/1'   │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/1'   │
+│ libp2p js client (1 sub, 5 posts, 5 replies)               │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│ libp2p js client (10 subs, 5 posts, 5 replies)             │          │                             │        │         │         │
+│                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'node'   │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'resolve community address' │ NaN    │ NaN     │ '0/10'  │
+│                                                            │ 'chrome' │ 'fetch comment update'      │ NaN    │ NaN     │ '0/10'  │
+└────────────────────────────────────────────────────────────┴──────────┴─────────────────────────────┴────────┴─────────┴─────────┘
+┌──────────────────────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                                  │ runtime  │ benchmark         │ median │ average │ success │
+├──────────────────────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ RESOLVE ADDRESSES                        │          │                   │        │         │         │
+│                                          │          │                   │        │         │         │
+│                                          │          │                   │        │         │         │
+│ https://ethrpc.xyz (possibly not cached) │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.055  │ 0.054   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.045  │ 0.046   │ '28/28' │
+│ https://ethrpc.xyz                       │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.053  │ 0.053   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.056  │ 0.051   │ '28/28' │
+│ wss://ethrpc.xyz (possibly not cached)   │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.056  │ 0.056   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.046  │ 0.048   │ '28/28' │
+│ wss://ethrpc.xyz                         │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.056  │ 0.055   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.05   │ 0.051   │ '28/28' │
+│ https://ethrpc.xyz, viem, ethers.js      │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.058  │ 0.057   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.048  │ 0.049   │ '28/28' │
+│ viem                                     │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.057  │ 0.057   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.046  │ 0.048   │ '28/28' │
+│ ethers.js                                │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.061  │ 0.061   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.051  │ 0.053   │ '28/28' │
+│ https://solrpc.xyz                       │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.058  │ 0.058   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.043  │ 0.045   │ '28/28' │
+│ wss://solrpc.xyz (wss not implemented)   │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.057  │ 0.055   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.052  │ 0.048   │ '28/28' │
+│ web3.js                                  │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.06   │ 0.06    │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.048  │ 0.049   │ '28/28' │
+│ https://solrpc.xyz, web3.js              │          │                   │        │         │         │
+│                                          │ 'node'   │ 'resolve address' │ 0.057  │ 0.056   │ '28/28' │
+│                                          │ 'chrome' │ 'resolve address' │ 0.056  │ 0.051   │ '28/28' │
+└──────────────────────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+┌────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                │ runtime  │ benchmark         │ median │ average │ success │
+├────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ LOAD COMMUNITIES       │          │                   │        │         │         │
+│                        │          │                   │        │         │         │
+│                        │          │                   │        │         │         │
+│ libp2pjs concurrency=1 │          │                   │        │         │         │
+│                        │ 'node'   │ 'resolve address' │ 0.002  │ 0.003   │ '65/65' │
+│                        │ 'node'   │ 'fetch ipns'      │ 0.163  │ 0.181   │ '65/65' │
+│                        │ 'node'   │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/65'  │
+│                        │ 'node'   │ 'total load time' │ 0.474  │ 0.551   │ '65/65' │
+│                        │ 'chrome' │ 'resolve address' │ 0.002  │ 0.002   │ '65/65' │
+│                        │ 'chrome' │ 'fetch ipns'      │ 0.433  │ 0.516   │ '65/65' │
+│                        │ 'chrome' │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/65'  │
+│                        │ 'chrome' │ 'total load time' │ 0.884  │ 1.369   │ '65/65' │
+│ libp2pjs concurrency=4 │          │                   │        │         │         │
+│                        │ 'node'   │ 'resolve address' │ 0.004  │ 0.006   │ '65/65' │
+│                        │ 'node'   │ 'fetch ipns'      │ 0.179  │ 0.26    │ '65/65' │
+│                        │ 'node'   │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/65'  │
+│                        │ 'node'   │ 'total load time' │ 0.603  │ 0.824   │ '65/65' │
+│                        │ 'chrome' │ 'resolve address' │ 0.002  │ 0.003   │ '65/65' │
+│                        │ 'chrome' │ 'fetch ipns'      │ 0.44   │ 0.658   │ '65/65' │
+│                        │ 'chrome' │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/65'  │
+│                        │ 'chrome' │ 'total load time' │ 1.306  │ 1.793   │ '65/65' │
+└────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+  libp2pjs concurrency=1 (node): loaded 65/65 attempted (65 discovered)
+    final peers: 5 (browser-usable=0) {"tcp":5}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipfs=24.06s(68%) fetching-ipns=11.58s(32%)
+  libp2pjs concurrency=1 (chrome): loaded 65/65 attempted (65 discovered)
+    final peers: 3 (browser-usable=3) {"webrtc":3}
+    denied non-browser dials: 5 {"ws":5}
+    phase breakdown: fetching-ipfs=55.43s(62%) fetching-ipns=33.43s(38%)
+  libp2pjs concurrency=4 (node): loaded 65/65 attempted (65 discovered)
+    final peers: 5 (browser-usable=0) {"tcp":5}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipfs=36.66s(69%) fetching-ipns=16.53s(31%)
+  libp2pjs concurrency=4 (chrome): loaded 65/65 attempted (65 discovered)
+    final peers: 3 (browser-usable=3) {"webrtc":3}
+    denied non-browser dials: 3 {"ws":3}
+    phase breakdown: fetching-ipfs=73.77s(63%) fetching-ipns=42.61s(37%)
+┌─────────────────────────────────────────────────────┬──────────┬──────────────┬────────┬─────────┬─────────┐
+│ (index)                                             │ runtime  │ benchmark    │ median │ average │ success │
+├─────────────────────────────────────────────────────┼──────────┼──────────────┼────────┼─────────┼─────────┤
+│ GATEWAY FETCH IPNS                                  │          │              │        │         │         │
+│                                                     │          │              │        │         │         │
+│                                                     │          │              │        │         │         │
+│ https://ipfsgateway.xyz (gateway fetch only)        │          │              │        │         │         │
+│                                                     │ 'node'   │ 'fetch ipns' │ 1.655  │ 1.652   │ '28/28' │
+│                                                     │ 'chrome' │ 'fetch ipns' │ 1.389  │ 1.406   │ '28/28' │
+│ https://gateway.plebpubsub.xyz (gateway fetch only) │          │              │        │         │         │
+│                                                     │ 'node'   │ 'fetch ipns' │ 1.546  │ 1.556   │ '28/28' │
+│                                                     │ 'chrome' │ 'fetch ipns' │ 1.194  │ 1.223   │ '28/28' │
+│ https://gateway.forumindex.com (gateway fetch only) │          │              │        │         │         │
+│                                                     │ 'node'   │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│                                                     │ 'chrome' │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+└─────────────────────────────────────────────────────┴──────────┴──────────────┴────────┴─────────┴─────────┘
