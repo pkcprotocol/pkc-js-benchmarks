@@ -1,0 +1,104 @@
+# Benchmark published @pkcprotocol/pkc-js releases and commit the reports here.
+#
+# This is the self-contained replacement for the old cross-repo setup (the benchmark
+# job that used to live in pkcprotocol/pkc-js). It needs NO secrets: it pushes reports
+# to its own repo with the built-in GITHUB_TOKEN.
+#
+# How it "listens" for new releases: npm has no push webhook into Actions, so it polls
+# the npm registry on a schedule, and benchmarks any published version that doesn't yet
+# have a reports/<gitHead>.json. Reports are keyed by the version's git commit (gitHead)
+# so the reports-ui can map them to version labels exactly as before.
+name: benchmark pkc-js releases
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # every 6h: pick up newly published @pkcprotocol/pkc-js releases
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Specific version to (re)benchmark, even if already done (optional)'
+        required: false
+        type: string
+  push:
+    branches: [master]
+    # On harness changes, re-benchmark the current latest release so new/edited
+    # benchmarks appear. Must NOT include reports/** — this job commits reports back
+    # here, and triggering on reports/** would create an infinite loop.
+    paths:
+      - 'benchmark/**'
+      - 'lib/**'
+      - 'config/**'
+      - 'benchmark-options.ts'
+      - 'start.ts'
+      - 'types.ts'
+      - 'package.json'
+      - 'package-lock.json'
+
+# Never run two benchmark jobs at once — they both commit and push reports.
+concurrency:
+  group: benchmark-releases
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push report commits with the built-in GITHUB_TOKEN
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - run: sudo apt-get install -y xvfb
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+
+      - name: benchmark missing releases (oldest first)
+        env:
+          # On a harness push, force-rerun the current latest even if it already has a report.
+          FORCE_LATEST: ${{ github.event_name == 'push' && '1' || '' }}
+          INCLUDE_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+
+          mapfile -t TARGETS < <(node scripts/list-missing-benchmark-versions.ts)
+          echo "versions to benchmark: ${TARGETS[*]:-(none)}"
+
+          START=$(date +%s)
+          BUDGET=$((5 * 3600)) # stop starting new versions after ~5h; the next run continues
+
+          for line in "${TARGETS[@]}"; do
+            VER=$(echo "$line" | awk '{print $1}')
+            SHA=$(echo "$line" | awk '{print $2}')
+            [ -z "$VER" ] && continue
+            echo "::group::benchmark pkc-js v$VER ($SHA)"
+
+            # start.ts removes report.json on startup, so its presence after the run
+            # means this version benchmarked successfully.
+            if npm install "@pkcprotocol/pkc-js@$VER" && npm start && [ -f report.json ]; then
+              node lib/print-report.ts > "reports/$SHA.txt" || true
+              jq --arg sha "$SHA" 'map(. + {pkcJsCommitHash: $sha})' report.json > "reports/$SHA.json"
+              rm -f reports/all.json
+              jq -s -c 'sort_by(.[0].timestamp) | reverse' reports/*.json > reports/all.json
+              git add reports/
+              git commit -m "add benchmark report for pkc-js v$VER ($SHA)" || echo "no changes"
+            else
+              echo "benchmark failed / produced no report for v$VER; marking failed"
+              touch "reports/$SHA.failed"
+              git add reports/
+              git commit -m "mark pkc-js v$VER ($SHA) benchmark failed" || echo "no changes"
+            fi
+
+            git push || echo "push failed (will retry next run)"
+            echo "::endgroup::"
+
+            NOW=$(date +%s)
+            if [ $((NOW - START)) -gt $BUDGET ]; then
+              echo "time budget reached; remaining versions will run on the next schedule"
+              break
+            fi
+          done
