@@ -136,12 +136,23 @@ test('benchmark', async () => {
     })
 
   const measureSample = async (sampleIndex: number): Promise<void> => {
-    const metrics: ReplyPropagationMetrics = {
-      postInitialLoadTimeSeconds: null,
-      replyPublishTimeSeconds: null,
-      replyPropagationTimeSeconds: null,
-      replyTotalTimeSeconds: null,
-    }
+    // Only the first sample runs on a client that has never talked to this community, so it also
+    // pays whatever that first contact costs. It reports under its own `firstSample*` keys so it is
+    // never averaged with the steady-state samples (see ReplyPropagationMetrics).
+    const isFirstSample = sampleIndex === 0
+    const metrics: ReplyPropagationMetrics = isFirstSample
+      ? {
+          firstSamplePostInitialLoadTimeSeconds: null,
+          replyPublishTimeSeconds: null,
+          firstSampleReplyPropagationTimeSeconds: null,
+          firstSampleReplyTotalTimeSeconds: null,
+        }
+      : {
+          postInitialLoadTimeSeconds: null,
+          replyPublishTimeSeconds: null,
+          replyPropagationTimeSeconds: null,
+          replyTotalTimeSeconds: null,
+        }
     // keyed by post cid once we have one, so a sample that never got that far is still reported
     let metricsKey = `sample-${sampleIndex + 1}`
     reportReplies[metricsKey] = metrics
@@ -164,8 +175,10 @@ test('benchmark', async () => {
       const beforeLoadTimestamp = Date.now()
       await post.update()
       await waitFor(post, async () => typeof post.updatedAt === 'number', sampleTimeoutMs, 'the post to load')
-      metrics.postInitialLoadTimeSeconds = (Date.now() - beforeLoadTimestamp) / 1000
-      console.log(`  loaded post in ${metrics.postInitialLoadTimeSeconds}s (replyCount=${post.replyCount ?? 0})`)
+      const postInitialLoadTimeSeconds = (Date.now() - beforeLoadTimestamp) / 1000
+      if (isFirstSample) metrics.firstSamplePostInitialLoadTimeSeconds = postInitialLoadTimeSeconds
+      else metrics.postInitialLoadTimeSeconds = postInitialLoadTimeSeconds
+      console.log(`  loaded post in ${postInitialLoadTimeSeconds}s (replyCount=${post.replyCount ?? 0})`)
 
       // 2. the other client publishes a reply, and it succeeds
       const hostReply = await postToServer<HostReply>('/reply-propagation/reply', {
@@ -177,9 +190,18 @@ test('benchmark', async () => {
 
       // 3. how long until this client can see it
       await waitFor(post, () => findReplyInPages(post, hostReply.replyCid), sampleTimeoutMs, 'the reply to show up')
-      metrics.replyPropagationTimeSeconds = (Date.now() - hostReply.publishedAtMs) / 1000
-      metrics.replyTotalTimeSeconds = metrics.replyPropagationTimeSeconds + hostReply.replyPublishTimeSeconds
-      console.log(`  reply visible ${metrics.replyPropagationTimeSeconds}s after it was accepted`)
+      const replyPropagationTimeSeconds = (Date.now() - hostReply.publishedAtMs) / 1000
+      const replyTotalTimeSeconds = replyPropagationTimeSeconds + hostReply.replyPublishTimeSeconds
+      if (isFirstSample) {
+        metrics.firstSampleReplyPropagationTimeSeconds = replyPropagationTimeSeconds
+        metrics.firstSampleReplyTotalTimeSeconds = replyTotalTimeSeconds
+      } else {
+        metrics.replyPropagationTimeSeconds = replyPropagationTimeSeconds
+        metrics.replyTotalTimeSeconds = replyTotalTimeSeconds
+      }
+      console.log(
+        `  reply visible ${replyPropagationTimeSeconds}s after it was accepted${isFirstSample ? ' (first sample)' : ''}`,
+      )
     } catch (e) {
       metrics.error = {message: (e as Error).message}
       console.log(`  sample failed: ${(e as Error).message}`)

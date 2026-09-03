@@ -43,6 +43,14 @@ REPLY_PROPAGATION_SAMPLES=1 npm start -- --benchmark reply-propagation   # quick
 
 Each sample is a fresh post and a fresh reply; the report medians over `samples` (3 by default).
 
+The **first sample of every cell is reported on its own rows** (`… (first sample)`): it is the only
+one whose reading client had never talked to that community before, so it also pays whatever that
+first contact costs. Usually that is nothing measurable — first and later samples land within noise
+of each other — but one run against a remote community measured **58.7s on the first sample against
+0.44s on the second**, which dragged the cell's median to a number no reader ever experiences.
+Keeping the two apart makes an outlier like that visible instead of letting it move the headline.
+The plain rows are the steady state: what a user with the thread already open sees.
+
 #### remote community cells
 
 The `remote community, reader: …` cells run the same measurement against a community that lives on
@@ -58,10 +66,9 @@ For the kubo reader the harness boots a kubo node on the public network and writ
 starting it — otherwise pkc-js notices the config change on init, rewrites it and POSTs `/shutdown`
 to the node mid-benchmark.
 
-Note the first sample of a cell also pays the reading client's cold start (a fresh kubo node has to
-bootstrap into the network and join the community's IPNS pubsub topic — measured at ~60s, against
-~0.4s for every sample after it), so read the per-sample values in `report.json`, not just the
-median, when a cell has few samples.
+The first sample of these cells is also the one where a freshly booted kubo node has to bootstrap
+into the network and join the community's IPNS pubsub topic before anything can arrive; it is
+reported on its own `(first sample)` rows for that reason (see above).
 
 ### load-communities benchmark
 

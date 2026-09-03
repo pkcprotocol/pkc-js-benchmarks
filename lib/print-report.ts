@@ -111,13 +111,24 @@ const benchmarkTypeToReportType = (benchmarkType: string): ReportType =>
         ? 'publish'
         : 'community'
 
-// reply-propagation metrics, in the order they happen during one sample
+// reply-propagation metrics, in the order they happen during one sample. The `(first sample)` rows
+// come from the cell's first sample only — the one whose client had never talked to the community
+// before (see ReplyPropagationMetrics). Usually it matches the rest; keeping it out of the median
+// means that when it doesn't, the outlier is visible instead of moving the headline number.
 const replyPropagationRows: {key: keyof ReplyPropagationMetrics; label: string}[] = [
+  {key: 'firstSamplePostInitialLoadTimeSeconds', label: 'post initial load (first sample)'},
+  {key: 'firstSampleReplyPropagationTimeSeconds', label: 'reply propagation (first sample)'},
+  {key: 'firstSampleReplyTotalTimeSeconds', label: 'reply publish+propagation (first)'},
   {key: 'postInitialLoadTimeSeconds', label: 'post initial load'},
   {key: 'replyPublishTimeSeconds', label: 'reply publish'},
   {key: 'replyPropagationTimeSeconds', label: 'reply propagation'},
   {key: 'replyTotalTimeSeconds', label: 'reply publish+propagation'},
 ]
+
+// First and later samples carry different keys, so a sample that never had a key is "not
+// applicable", not "failed" — count the success ratio only over the samples the row is about.
+const samplesWithKey = (bag: MetricBag, key: MetricKey): MetricBag =>
+  Object.fromEntries(Object.entries(bag).filter(([, entry]) => key in (entry as Record<string, unknown>)))
 
 // load-communities carries aggregate peer/transport/phase data that doesn't fit the
 // per-metric median/average table — print it as a block under the benchmark.
@@ -197,9 +208,9 @@ if (format === 'table') {
         }
       }
       if (reportType === 'reply') {
-        const replies = benchmark.replies ?? {}
         for (const {key, label} of replyPropagationRows) {
-          if (!hasTimePropName(replies, key)) continue
+          const replies = samplesWithKey(benchmark.replies ?? {}, key)
+          if (!hasTimePropName(replies, key) || Object.keys(replies).length === 0) continue
           table[getNextRowName()] = {
             runtime: benchmark.runtime,
             benchmark: label,
@@ -336,9 +347,9 @@ if (format === 'inline') {
         }
       }
       if (reportType === 'reply') {
-        const replies = benchmark.replies ?? {}
         for (const {key, label} of replyPropagationRows) {
-          if (!hasTimePropName(replies, key)) continue
+          const replies = samplesWithKey(benchmark.replies ?? {}, key)
+          if (!hasTimePropName(replies, key) || Object.keys(replies).length === 0) continue
           console.log(
             `${label}:`.padEnd(pad) +
               `median ${getMedian(replies, key)}s`.padEnd(pad) +

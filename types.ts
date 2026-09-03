@@ -138,7 +138,19 @@ export interface NetSnapshot {
 }
 
 // One post+reply sample, measured on the reading client.
+//
+// The FIRST sample of a cell reports under the `firstSample*` keys and every later one under the
+// plain keys, because it is the only sample whose client has never talked to this community
+// before — it also pays whatever that first contact costs (the first provider lookup through the
+// http routers, joining the community's IPNS pubsub topic). Usually that costs nothing measurable
+// (first and later samples within noise of each other), but one run against a remote community
+// measured 58.7s on the first sample against 0.44s on the second, and averaging the two produced
+// a median no reader ever experiences. Keeping them apart makes such an outlier visible instead
+// of letting it move the headline number.
 export interface ReplyPropagationMetrics {
+  firstSamplePostInitialLoadTimeSeconds?: number | null
+  firstSampleReplyPropagationTimeSeconds?: number | null
+  firstSampleReplyTotalTimeSeconds?: number | null
   // reading client: post.update() until the post's first CommentUpdate is in hand
   postInitialLoadTimeSeconds?: number | null
   // publishing client: publish() until challengeverification says the reply was accepted
