@@ -38,7 +38,7 @@ const kuboRpc = async (rpcUrl: string, endpoint: string, timeoutMs = 30_000): Pr
   }
 }
 
-const waitForApi = async (rpcUrl: string, timeoutMs = 120_000): Promise<any> => {
+const waitForApi = async (rpcUrl: string, hasExited: () => boolean, logPath: string, timeoutMs = 120_000): Promise<any> => {
   const deadline = Date.now() + timeoutMs
   let lastError: Error | undefined
   while (Date.now() < deadline) {
@@ -46,6 +46,9 @@ const waitForApi = async (rpcUrl: string, timeoutMs = 120_000): Promise<any> => 
       return await kuboRpc(rpcUrl, 'id', 5_000)
     } catch (e) {
       lastError = e as Error
+      // a daemon that died (a port it could not bind, a repo it could not open) is never coming
+      // up, and waiting out the full timeout only buries the reason
+      if (hasExited()) throw Error(`kubo daemon exited before its api came up, see ${logPath}`)
       await new Promise((r) => setTimeout(r, 500))
     }
   }
@@ -120,8 +123,10 @@ export const startKuboNode = async ({config, dir, exposeRoutingApi}: StartKuboNo
   kuboConfig.Ipns.UsePubsub = true
   fs.writeFileSync(configPath, JSON.stringify(kuboConfig), 'utf-8')
 
-  const stdoutLog = fs.createWriteStream(path.join(dir, 'kubo-stdout.log'), {flags: 'a'})
-  const stderrLog = fs.createWriteStream(path.join(dir, 'kubo-stderr.log'), {flags: 'a'})
+  const stdoutLogPath = path.join(dir, 'kubo-stdout.log')
+  const stderrLogPath = path.join(dir, 'kubo-stderr.log')
+  const stdoutLog = fs.createWriteStream(stdoutLogPath, {flags: 'a'})
+  const stderrLog = fs.createWriteStream(stderrLogPath, {flags: 'a'})
   const daemon: ChildProcess = spawn(
     kuboBinary,
     ['daemon', '--migrate'],
@@ -131,7 +136,7 @@ export const startKuboNode = async ({config, dir, exposeRoutingApi}: StartKuboNo
   daemon.stderr?.pipe(stderrLog)
 
   const rpcUrl = kuboRpcUrl(config)
-  const id = await waitForApi(rpcUrl)
+  const id = await waitForApi(rpcUrl, () => daemon.exitCode !== null || daemon.signalCode !== null, stderrLogPath)
   const peerId: string = id.ID
   console.log(`kubo node '${config.name}' up: peerId=${peerId} api=${config.apiPort} gateway=${config.gatewayPort} swarm=${config.swarmPort}`)
 
