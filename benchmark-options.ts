@@ -581,11 +581,16 @@ const replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[] = [
   },
 ]
 
-// The same measurement against a community that actually lives on another machine (a test
-// community on the bitsocial node, reached over the public network). Both clients still run
+// OPT-IN, NOT PART OF THE CI MATRIX (see the `if` below). The same measurement against a community
+// that actually lives on another machine, reached over the public network. Both clients still run
 // here — only the community is remote, which is the point: this is what a reply update costs a
 // real client when the community is a remote node, with production gateways/routers/pubsub
 // providers in between.
+//
+// It stays opt-in because it publishes real posts and replies to a community someone else operates
+// and depends on that machine being up, neither of which belongs in an unattended benchmark that
+// runs on every release. The local cells above cover the same three reader transports on hardware
+// the CI owns.
 //
 // The community's `question` challenge answer is published by its owner in the community's own
 // settings, so the benchmark answers the challenge rather than needing a moderator role.
@@ -614,7 +619,7 @@ const remotePublisherPkcOptions = {
   validatePages: false,
   dataPath: '.pkc-benchmark-reply-propagation-publisher',
 }
-replyPropagationBenchmarkOptions.push(
+if (process.env.REPLY_PROPAGATION_REMOTE === '1') replyPropagationBenchmarkOptions.push(
   {
     name: 'remote community, reader: kubo rpc',
     pkcOptions: {

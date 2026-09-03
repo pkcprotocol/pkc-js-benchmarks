@@ -51,7 +51,16 @@ of each other — but one run against a remote community measured **58.7s on the
 Keeping the two apart makes an outlier like that visible instead of letting it move the headline.
 The plain rows are the steady state: what a user with the thread already open sees.
 
-#### remote community cells
+#### remote community cells (opt-in, not run by CI)
+
+```
+REPLY_PROPAGATION_REMOTE=1 npm start -- --runtime node --benchmark reply-propagation
+```
+
+These are **off by default**: they publish real posts and replies to a community someone else
+operates and depend on that machine being up, neither of which belongs in an unattended benchmark
+that runs on every release. The default cells already cover the same three reader transports on
+hardware the CI owns.
 
 The `remote community, reader: …` cells run the same measurement against a community that lives on
 **another machine** and is reached over the public network (a test community whose `question`
