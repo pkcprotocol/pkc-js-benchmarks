@@ -15,7 +15,7 @@
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "@bitsocial/bso-resolver": "0.0.8",
-    "@pkcprotocol/pkc-js": "0.0.30",
+    "@pkcprotocol/pkc-js": "0.0.94",
     "cborg": "5.1.1",
     "debug": "4.4.3",
     "decompress": "4.2.1",
@@ -26,6 +26,7 @@
     "http-proxy-agent": "9.0.0",
     "https-proxy-agent": "9.0.0",
     "javascript-time-ago": "2.6.4",
+    "kubo": "0.43.0",
     "kubo-rpc-client": "6.1.0",
     "node-fetch": "3.3.2",
     "nodemon": "3.1.14",

@@ -6,6 +6,7 @@ import yargs from 'yargs/yargs'
 import {hideBin} from 'yargs/helpers'
 import benchmarkOptionsFile from './benchmark-options.ts'
 import startServer from './lib/server.ts'
+import {replyPropagationHost} from './lib/reply-propagation-host.ts'
 
 interface Argv {
   debugPkcJs?: boolean
@@ -111,6 +112,25 @@ if (isBenchmark('publish')) {
       await benchmarkChrome(benchmarkFile, benchmarkOptions)
     }
   }
+}
+
+if (isBenchmark('reply-propagation')) {
+  console.log('benchmarking reply-propagation...')
+  const benchmarkFile = 'benchmark-reply-propagation.ts'
+  if (isRuntime('node')) {
+    for (const benchmarkOptions of benchmarkOptionsFile.replyPropagationBenchmarkOptions) {
+      const dp = (benchmarkOptions.pkcOptions as {dataPath?: string}).dataPath
+      if (dp) fs.removeSync(dp)
+      await benchmarkNode(benchmarkFile, benchmarkOptions)
+    }
+  }
+  if (isRuntime('chrome')) {
+    for (const benchmarkOptions of benchmarkOptionsFile.replyPropagationBenchmarkOptions) {
+      await benchmarkChrome(benchmarkFile, benchmarkOptions)
+    }
+  }
+  // the community and both kubo daemons of the reply-propagation host live in this process
+  await replyPropagationHost.stop()
 }
 
 if (isBenchmark('fetch-ipns')) {

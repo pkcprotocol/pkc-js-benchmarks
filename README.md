@@ -10,8 +10,38 @@ npm start -- --runtime node --benchmark fetch-ipns
 ### running specific benchmarks
 
 ```
-npm start -- --runtime node|chrome --benchmark resolve-addresses|fetch-ipns|gateway-fetch-ipns|fetch-comment|publish|load-communities
+npm start -- --runtime node|chrome --benchmark resolve-addresses|fetch-ipns|gateway-fetch-ipns|fetch-comment|publish|reply-propagation|load-communities
 ```
+
+### reply-propagation benchmark
+
+`reply-propagation` answers: **one client is sitting on a post with `post.update()`; a completely
+separate client publishes a reply to that post and succeeds — how long until the reply shows up on
+the first client?**
+
+- the two clients are separate **processes**: the reading client is the benchmark itself (node or
+  a real browser), the publishing client lives in the benchmark server (`lib/reply-propagation-host.ts`)
+- each side gets its **own kubo node**, and the reading client's transport is the config axis:
+  `kubo rpc`, `libp2p js client` (helia) and `ipfs gateway` learn about a new reply in completely
+  different ways
+- the timer starts when the community *accepts* the reply (`challengeverification`, success) and
+  stops when the reply is actually reachable on the reading client (in the post's replies pages)
+
+The community is **not** a production 5chan board on purpose: those answer a challenge request with
+an interactive `url/iframe` Spam Blocker challenge, so no headless client can ever publish to one
+successfully — and "the publish succeeded" is half of this measurement. Instead the harness boots
+its own community with `challenges: []` on its own kubo node (`lib/kubo-nodes.ts`). The three nodes
+have no public bootstrap peers and are wired only to each other, so what is measured is the pkc-js
+pipeline — community accepts the reply, community publishes a new record, client notices and
+fetches it — and not today's weather on the public DHT.
+
+```
+npm start -- --benchmark reply-propagation                  # full matrix (node + chrome)
+npm start -- --runtime node --benchmark reply-propagation
+REPLY_PROPAGATION_SAMPLES=1 npm start -- --benchmark reply-propagation   # quick smoke run
+```
+
+Each sample is a fresh post and a fresh reply; the report medians over `samples` (3 by default).
 
 ### load-communities benchmark
 

@@ -14,6 +14,7 @@ export interface PkcOptions {
   chainProviders?: Partial<Record<string, ChainProviderConfig>>
   resolveAuthorAddresses?: boolean
   ipfsGatewayUrls?: string[]
+  kuboRpcClientsOptions?: string[]
   pubsubKuboRpcClients?: string[]
   pubsubKuboRpcClientsOptions?: string[]
   libp2pJsClientsOptions?: Array<{key: string; libp2pOptions?: unknown; heliaOptions?: unknown}>
@@ -68,8 +69,23 @@ export interface PublishBenchmarkOptions extends BaseBenchmarkOptions {
   communityPublicKey: string
 }
 
+// reply-propagation benchmark: how long a reply published by one client takes to become
+// visible to a *different* client that is already sitting on the post with post.update().
+//
+// The community is not a production 5chan board (those end the challenge exchange at an
+// interactive Spam Blocker iframe, so no headless client can publish to them successfully) —
+// the harness runs its own no-challenge community on its own kubo node, and the two clients
+// each get their own kubo/helia/gateway transport. See lib/reply-propagation-host.ts.
+export interface ReplyPropagationBenchmarkOptions extends BaseBenchmarkOptions {
+  // how many post+reply pairs to measure; the report medians over the samples (default 3)
+  samples?: number
+  // give up on a single sample after this long and record it as failed (default 180)
+  sampleTimeoutSeconds?: number
+}
+
 export interface BenchmarkOptionsFile {
   publishBenchmarkOptions: PublishBenchmarkOptions[]
+  replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[]
   fetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[]
   fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[]
   resolveAddressesBenchmarkOptions: CommunityListBenchmarkOptions[]
@@ -104,6 +120,19 @@ export interface NetSnapshot {
   byTransport: Record<string, number>
 }
 
+// One post+reply sample, measured on the reading client.
+export interface ReplyPropagationMetrics {
+  // reading client: post.update() until the post's first CommentUpdate is in hand
+  postInitialLoadTimeSeconds?: number | null
+  // publishing client: publish() until challengeverification says the reply was accepted
+  replyPublishTimeSeconds?: number | null
+  // THE number this benchmark exists for: accepted reply -> reply visible on the reading client
+  replyPropagationTimeSeconds?: number | null
+  // publish() -> visible on the reading client (publish + propagation)
+  replyTotalTimeSeconds?: number | null
+  error?: {message: string}
+}
+
 export interface CommentMetrics {
   fetchCommentIpfsTimeSeconds?: number | null
   resolvingCommunityAddressTimeSeconds?: number | null
@@ -118,6 +147,7 @@ export interface BenchmarkReport {
   runtime: Runtime
   communities?: Record<string, CommunityMetrics>
   comments?: Record<string, CommentMetrics>
+  replies?: Record<string, ReplyPropagationMetrics>
   // load-communities aggregates
   discoveredCount?: number
   loadedCount?: number

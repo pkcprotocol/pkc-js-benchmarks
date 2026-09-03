@@ -6,6 +6,7 @@ import path from 'node:path'
 import PKC from '@pkcprotocol/pkc-js'
 import type {Server} from 'node:http'
 import {buildPkcOptions} from './build-pkc-options.ts'
+import {replyPropagationHost} from './reply-propagation-host.ts'
 import type {
   BenchmarkOptionsFile,
   BenchmarkOptionsType,
@@ -66,6 +67,37 @@ app.post('/report', async (req, res) => {
   fs.writeFileSync(reportPath, JSON.stringify(reports))
 
   res.send()
+})
+
+// reply-propagation benchmark. The community and the publishing client live here, in the
+// benchmark server, so that the reading client in benchmark/benchmark-reply-propagation.ts is a
+// genuinely separate process (and can be a real browser). See lib/reply-propagation-host.ts.
+app.post('/reply-propagation/post', async (req, res) => {
+  console.log('/reply-propagation/post')
+  try {
+    res.send(JSON.stringify(await replyPropagationHost.createPost()))
+  } catch (e) {
+    console.log('/reply-propagation/post failed:', (e as Error).message)
+    res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
+  }
+})
+
+app.post('/reply-propagation/reply', async (req, res) => {
+  console.log('/reply-propagation/reply', req.body)
+  try {
+    const postCid = (req.body as {postCid?: string})?.postCid
+    if (!postCid) throw Error('missing postCid')
+    res.send(JSON.stringify(await replyPropagationHost.publishReply(postCid)))
+  } catch (e) {
+    console.log('/reply-propagation/reply failed:', (e as Error).message)
+    res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
+  }
+})
+
+app.post('/reply-propagation/stop', async (req, res) => {
+  console.log('/reply-propagation/stop')
+  await replyPropagationHost.stop()
+  res.send(JSON.stringify({stopped: true}))
 })
 
 app.get('/community', async (req, res) => {

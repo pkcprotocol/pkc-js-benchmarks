@@ -1,4 +1,5 @@
 import fiveChanDirectories from './multisubs/5chan-directories.json' with {type: 'json'}
+import {localKuboNodes, kuboGatewayUrl, kuboHttpRouterUrl, kuboRpcUrl} from './lib/local-kubo-config.ts'
 import type {
   CommentIdentifier,
   CommentListBenchmarkOptions,
@@ -6,10 +7,14 @@ import type {
   CommunityListBenchmarkOptions,
   LoadCommunitiesBenchmarkOptions,
   PublishBenchmarkOptions,
+  ReplyPropagationBenchmarkOptions,
   BenchmarkOptionsFile,
 } from './types.ts'
 
 const dataPath = '.pkc-benchmark'
+// separate from `dataPath` so start.ts wipes the reading client's cache between reply-propagation
+// cells without touching the other benchmarks' caches
+const replyPropagationDataPath = '.pkc-benchmark-reply-propagation'
 
 const communities: CommunityIdentifier[] = fiveChanDirectories.directories.map((d) => ({
   name: d.name,
@@ -522,6 +527,60 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
   }
 ]
 
+// reply-propagation: one client sits on a post with post.update() while a *different* client
+// (its own process, its own PKC, its own kubo node) publishes a reply to it — how long until the
+// reply shows up on the first client?
+//
+// The community can't be a production 5chan board: those end the challenge exchange at an
+// interactive Spam Blocker iframe, so a headless publish never succeeds. The harness runs its own
+// no-challenge community on its own kubo node instead (lib/reply-propagation-host.ts), which also
+// means the reader-side transport is the only thing that varies here — and it is the whole point
+// of the matrix: kubo, helia (libp2p-js) and ipfs-gateway clients learn about a new reply in
+// completely different ways. The node/chrome runtime axis is applied on top by start.ts.
+const replyPropagationSamples = process.env.REPLY_PROPAGATION_SAMPLES
+  ? Number(process.env.REPLY_PROPAGATION_SAMPLES)
+  : 3
+const replyPropagationBasePkcOptions = {
+  resolveAuthorAddresses: false,
+  validatePages: false,
+  // httpRoutersOptions: [] wherever the reader talks to kubo — pkc-js otherwise defaults it to
+  // the production routers, rewrites Routing.Routers on the node and POSTs /shutdown to it.
+  httpRoutersOptions: [] as string[],
+  ipfsGatewayUrls: [] as string[],
+}
+const replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[] = [
+  {
+    name: 'reader: kubo rpc',
+    pkcOptions: {
+      ...replyPropagationBasePkcOptions,
+      kuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.reader)],
+      pubsubKuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.reader)],
+      dataPath: replyPropagationDataPath,
+    },
+    samples: replyPropagationSamples,
+  },
+  {
+    name: 'reader: libp2p js client',
+    pkcOptions: {
+      ...replyPropagationBasePkcOptions,
+      libp2pJsClientsOptions: [{key: 'libp2pjs'}],
+      // the community's own kubo node serves /routing/v1 — the local stand-in for routing.lol
+      httpRoutersOptions: [kuboHttpRouterUrl(localKuboNodes.community)],
+      dataPath: replyPropagationDataPath,
+    },
+    samples: replyPropagationSamples,
+  },
+  {
+    name: 'reader: ipfs gateway',
+    pkcOptions: {
+      ...replyPropagationBasePkcOptions,
+      ipfsGatewayUrls: [kuboGatewayUrl(localKuboNodes.reader)],
+      dataPath: replyPropagationDataPath,
+    },
+    samples: replyPropagationSamples,
+  },
+]
+
 // load-communities: load EVERY production 5chan board (discovered live from GitHub at
 // runtime — see lib/discover-communities.ts, nothing hardcoded) over Helia/libp2p-js in
 // pure-P2P browser mode, measuring per-community load time + peer/transport reachability.
@@ -560,6 +619,7 @@ const loadCommunitiesBenchmarkOptions: LoadCommunitiesBenchmarkOptions[] = loadC
 
 const benchmarkOptions: BenchmarkOptionsFile = {
   resolveAddressesBenchmarkOptions,
+  replyPropagationBenchmarkOptions,
   fetchIpnsBenchmarkOptions,
   gatewayFetchIpnsBenchmarkOptions,
   fetchCommentBenchmarkOptions,

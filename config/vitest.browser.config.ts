@@ -6,8 +6,10 @@ const file = process.env.BENCHMARK_FILE || ''
 
 export default defineConfig({
   test: {
-    testTimeout: 600000,
-    hookTimeout: 600000,
+    // reply-propagation samples an ipfs-gateway reader, which only learns about a new reply on
+    // its next poll (pkc-js updateInterval, 60s by default), so a cell can legitimately run minutes
+    testTimeout: 1200000,
+    hookTimeout: 1200000,
     include: file ? [`benchmark/${file}`] : ['benchmark/**/*.ts'],
     browser: {
       enabled: true,

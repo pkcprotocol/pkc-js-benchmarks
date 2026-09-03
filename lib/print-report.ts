@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import path from 'node:path'
-import type {BenchmarkReport, CommunityMetrics, CommentMetrics} from '../types.ts'
+import type {BenchmarkReport, CommunityMetrics, CommentMetrics, ReplyPropagationMetrics} from '../types.ts'
 
 const reportPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'report.json')
 const reports: BenchmarkReport[] = JSON.parse(readFileSync(reportPath, 'utf-8'))
@@ -11,8 +11,8 @@ if (process.argv.includes('--inline')) {
   format = 'inline'
 }
 
-type MetricKey = keyof CommunityMetrics | keyof CommentMetrics
-type MetricBag = Record<string, CommunityMetrics | CommentMetrics>
+type MetricKey = keyof CommunityMetrics | keyof CommentMetrics | keyof ReplyPropagationMetrics
+type MetricBag = Record<string, CommunityMetrics | CommentMetrics | ReplyPropagationMetrics>
 
 const numericValues = (data: MetricBag, key: MetricKey): number[] => {
   return Object.values(data)
@@ -100,10 +100,24 @@ for (const benchmarkType in benchmarkTypesByName) {
 const formatBenchmarkTypeTitle = (string: string): string =>
   string.replace('BenchmarkOptions', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
 
-type ReportType = 'comment' | 'publish' | 'community'
+type ReportType = 'comment' | 'publish' | 'community' | 'reply'
 
 const benchmarkTypeToReportType = (benchmarkType: string): ReportType =>
-  benchmarkType.match(/comment/i) ? 'comment' : benchmarkType.match(/publish/i) ? 'publish' : 'community'
+  benchmarkType.match(/reply/i)
+    ? 'reply'
+    : benchmarkType.match(/comment/i)
+      ? 'comment'
+      : benchmarkType.match(/publish/i)
+        ? 'publish'
+        : 'community'
+
+// reply-propagation metrics, in the order they happen during one sample
+const replyPropagationRows: {key: keyof ReplyPropagationMetrics; label: string}[] = [
+  {key: 'postInitialLoadTimeSeconds', label: 'post initial load'},
+  {key: 'replyPublishTimeSeconds', label: 'reply publish'},
+  {key: 'replyPropagationTimeSeconds', label: 'reply propagation'},
+  {key: 'replyTotalTimeSeconds', label: 'reply publish+propagation'},
+]
 
 // load-communities carries aggregate peer/transport/phase data that doesn't fit the
 // per-metric median/average table — print it as a block under the benchmark.
@@ -179,6 +193,19 @@ if (format === 'table') {
             median: getMedian(communities, 'totalLoadTimeSeconds'),
             average: getAverage(communities, 'totalLoadTimeSeconds'),
             success: getSuccessRatio(communities, 'totalLoadTimeSeconds'),
+          }
+        }
+      }
+      if (reportType === 'reply') {
+        const replies = benchmark.replies ?? {}
+        for (const {key, label} of replyPropagationRows) {
+          if (!hasTimePropName(replies, key)) continue
+          table[getNextRowName()] = {
+            runtime: benchmark.runtime,
+            benchmark: label,
+            median: getMedian(replies, key),
+            average: getAverage(replies, key),
+            success: getSuccessRatio(replies, key),
           }
         }
       }
@@ -306,6 +333,18 @@ if (format === 'inline') {
         }
         if (benchmark.type === 'loadCommunitiesBenchmarkOptions') {
           printLoadCommunitiesAggregates(benchmark)
+        }
+      }
+      if (reportType === 'reply') {
+        const replies = benchmark.replies ?? {}
+        for (const {key, label} of replyPropagationRows) {
+          if (!hasTimePropName(replies, key)) continue
+          console.log(
+            `${label}:`.padEnd(pad) +
+              `median ${getMedian(replies, key)}s`.padEnd(pad) +
+              `| average ${getAverage(replies, key)}s`.padEnd(pad) +
+              `| success ${getSuccessRatio(replies, key)}`,
+          )
         }
       }
       if (reportType === 'comment') {
