@@ -11,6 +11,7 @@ import type {
   BenchmarkOptionsFile,
   BenchmarkOptionsType,
   CommunityMetrics,
+  ReplyPropagationBenchmarkOptions,
 } from '../types.ts'
 
 const argv = yargs(process.argv).argv as {apiPort?: number}
@@ -72,10 +73,21 @@ app.post('/report', async (req, res) => {
 // reply-propagation benchmark. The community and the publishing client live here, in the
 // benchmark server, so that the reading client in benchmark/benchmark-reply-propagation.ts is a
 // genuinely separate process (and can be a real browser). See lib/reply-propagation-host.ts.
+// The benchmark identifies itself by options name; the server reads the entry so the community
+// target and the publishing client's transport stay declared in one place (benchmark-options.ts).
+const replyPropagationOptions = async (req: express.Request): Promise<ReplyPropagationBenchmarkOptions> => {
+  const benchmarkOptionsName = (req.body as {benchmarkOptionsName?: string})?.benchmarkOptionsName
+  if (!benchmarkOptionsName) throw Error('missing benchmarkOptionsName')
+  const {default: benchmarkOptions} = (await import(benchmarkOptionsPath)) as {default: BenchmarkOptionsFile}
+  const found = benchmarkOptions.replyPropagationBenchmarkOptions.find((item) => item.name === benchmarkOptionsName)
+  if (!found) throw Error(`no replyPropagationBenchmarkOptions named '${benchmarkOptionsName}'`)
+  return found
+}
+
 app.post('/reply-propagation/post', async (req, res) => {
-  console.log('/reply-propagation/post')
+  console.log('/reply-propagation/post', req.body)
   try {
-    res.send(JSON.stringify(await replyPropagationHost.createPost()))
+    res.send(JSON.stringify(await replyPropagationHost.createPost(await replyPropagationOptions(req))))
   } catch (e) {
     console.log('/reply-propagation/post failed:', (e as Error).message)
     res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
@@ -87,7 +99,7 @@ app.post('/reply-propagation/reply', async (req, res) => {
   try {
     const postCid = (req.body as {postCid?: string})?.postCid
     if (!postCid) throw Error('missing postCid')
-    res.send(JSON.stringify(await replyPropagationHost.publishReply(postCid)))
+    res.send(JSON.stringify(await replyPropagationHost.publishReply(await replyPropagationOptions(req), postCid)))
   } catch (e) {
     console.log('/reply-propagation/reply failed:', (e as Error).message)
     res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))

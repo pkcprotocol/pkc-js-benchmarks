@@ -19,6 +19,9 @@ export const localKuboNodes = {
   publisher: {name: 'publisher', apiPort: 15102, gatewayPort: 18102, swarmPort: 24102},
   // the *reading* client's node: used by the `kubo` and `ipfs-gateway` reader variants
   reader: {name: 'reader', apiPort: 15103, gatewayPort: 18103, swarmPort: 24103},
+  // the reading client's node when the community is remote: same role, but on the public
+  // network (swarmPort + 1 is its /ws listener, see startKuboNode)
+  publicReader: {name: 'public-reader', apiPort: 15104, gatewayPort: 18104, swarmPort: 24104},
 } as const satisfies Record<string, KuboNodeConfig>
 
 export const kuboRpcUrl = (node: KuboNodeConfig): string => `http://127.0.0.1:${node.apiPort}/api/v0`

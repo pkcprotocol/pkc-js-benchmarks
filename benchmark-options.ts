@@ -581,6 +581,96 @@ const replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[] = [
   },
 ]
 
+// The same measurement against a community that actually lives on another machine (a test
+// community on the bitsocial node, reached over the public network). Both clients still run
+// here — only the community is remote, which is the point: this is what a reply update costs a
+// real client when the community is a remote node, with production gateways/routers/pubsub
+// providers in between.
+//
+// The community's `question` challenge answer is published by its owner in the community's own
+// settings, so the benchmark answers the challenge rather than needing a moderator role.
+const remoteCommunity = {
+  publicKey: '12D3KooWG3XbzoVyAE6Y9vHZKF64Yuuu4TjdgQKedk14iYmTEPWu',
+  challengeAnswers: ['398a418e-0af6-43f5-ad4c-894b189f6361'],
+}
+const productionHttpRouters = [
+  'https://routing.lol',
+  'https://peers.pleb.bot',
+  'https://peers.plebpubsub.xyz',
+  'https://peers.forumindex.com',
+]
+const productionGateways = [
+  'https://ipfsgateway.xyz',
+  'https://gateway.plebpubsub.xyz',
+  'https://gateway.forumindex.com',
+]
+// the publishing client is an ordinary production client: a pubsub provider to publish through,
+// gateways to read the community record
+const remotePublisherPkcOptions = {
+  pubsubKuboRpcClients: ['https://pubsubprovider.xyz', 'https://plebpubsub.xyz'],
+  ipfsGatewayUrls: productionGateways,
+  httpRoutersOptions: [] as string[],
+  resolveAuthorAddresses: false,
+  validatePages: false,
+  dataPath: '.pkc-benchmark-reply-propagation-publisher',
+}
+replyPropagationBenchmarkOptions.push(
+  {
+    name: 'remote community, reader: kubo rpc',
+    pkcOptions: {
+      kuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.publicReader)],
+      pubsubKuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.publicReader)],
+      ipfsGatewayUrls: [],
+      // the harness writes exactly this router set into the node's Routing config before starting
+      // it, so pkc-js finds it already configured and does not rewrite it and restart the node
+      httpRoutersOptions: productionHttpRouters,
+      resolveAuthorAddresses: false,
+      validatePages: false,
+      dataPath: replyPropagationDataPath,
+    },
+    community: remoteCommunity,
+    publisherPkcOptions: remotePublisherPkcOptions,
+    // a remote community over production infra needs more room than the loopback network:
+    // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
+    sampleTimeoutSeconds: 300,
+    readerKuboNode: true,
+    samples: replyPropagationSamples,
+  },
+  {
+    name: 'remote community, reader: libp2p js client',
+    pkcOptions: {
+      libp2pJsClientsOptions: [{key: 'libp2pjs'}],
+      httpRoutersOptions: productionHttpRouters,
+      ipfsGatewayUrls: [],
+      resolveAuthorAddresses: false,
+      validatePages: false,
+      dataPath: replyPropagationDataPath,
+    },
+    community: remoteCommunity,
+    publisherPkcOptions: remotePublisherPkcOptions,
+    // a remote community over production infra needs more room than the loopback network:
+    // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
+    sampleTimeoutSeconds: 300,
+    samples: replyPropagationSamples,
+  },
+  {
+    name: 'remote community, reader: ipfs gateway',
+    pkcOptions: {
+      ipfsGatewayUrls: productionGateways,
+      httpRoutersOptions: [],
+      resolveAuthorAddresses: false,
+      validatePages: false,
+      dataPath: replyPropagationDataPath,
+    },
+    community: remoteCommunity,
+    publisherPkcOptions: remotePublisherPkcOptions,
+    // a remote community over production infra needs more room than the loopback network:
+    // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
+    sampleTimeoutSeconds: 300,
+    samples: replyPropagationSamples,
+  },
+)
+
 // load-communities: load EVERY production 5chan board (discovered live from GitHub at
 // runtime — see lib/discover-communities.ts, nothing hardcoded) over Helia/libp2p-js in
 // pure-P2P browser mode, measuring per-community load time + peer/transport reachability.

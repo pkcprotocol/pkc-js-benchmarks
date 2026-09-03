@@ -88,25 +88,75 @@ export interface StartKuboNodeOptions {
   dir: string
   // serve /routing/v1 on the gateway port so a helia client can use this node as its http router
   exposeRoutingApi?: boolean
+  // keep the public bootstrap peers and dial the real IPFS network instead of only the sibling
+  // nodes this harness starts (used when the community lives on someone else's machine)
+  publicNetwork?: boolean
+  // write the Routing config pkc-js would write for these routers (see setupKuboHttpRouters in
+  // pkc-js). Doing it here rather than letting pkc-js do it keeps pkc-js from noticing a config
+  // change and POSTing /shutdown to the node mid-benchmark.
+  httpRouters?: string[]
 }
 
-export const startKuboNode = async ({config, dir, exposeRoutingApi}: StartKuboNodeOptions): Promise<KuboNode> => {
+// Byte-for-byte the shape pkc-js's setupKuboHttpRouters writes: find-providers/provide fan out to
+// the routers in parallel, find-peers/get-ipns/put-ipns are routed to a sentinel endpoint that does
+// not exist (so IPNS resolution happens over ipns-over-pubsub, as in production).
+const pkcRoutingConfig = (httpRouters: string[]) => {
+  const routers: Record<string, unknown> = {
+    HttpRoutersParallel: {Type: 'parallel', Parameters: {Routers: [] as unknown[]}},
+    HttpRouterNotSupported: {Type: 'http', Parameters: {Endpoint: 'http://kubohttprouternotsupported'}},
+  }
+  const parallel: unknown[] = []
+  for (const [i, endpoint] of [...httpRouters].sort().entries()) {
+    const routerName = `HttpRouter${i + 1}`
+    routers[routerName] = {Type: 'http', Parameters: {Endpoint: endpoint}}
+    parallel[i] = {RouterName: routerName, IgnoreErrors: true, Timeout: '10s'}
+  }
+  ;(routers.HttpRoutersParallel as {Parameters: {Routers: unknown[]}}).Parameters.Routers = parallel
+  return {
+    Type: 'custom',
+    Methods: {
+      'find-providers': {RouterName: 'HttpRoutersParallel'},
+      provide: {RouterName: 'HttpRoutersParallel'},
+      'find-peers': {RouterName: 'HttpRouterNotSupported'},
+      'get-ipns': {RouterName: 'HttpRouterNotSupported'},
+      'put-ipns': {RouterName: 'HttpRouterNotSupported'},
+    },
+    Routers: routers,
+  }
+}
+
+export const startKuboNode = async ({
+  config,
+  dir,
+  exposeRoutingApi,
+  publicNetwork,
+  httpRouters,
+}: StartKuboNodeOptions): Promise<KuboNode> => {
   await shutdownStaleNode(config)
   fs.removeSync(dir)
   fs.ensureDirSync(dir)
   const env = {...process.env, IPFS_PATH: dir}
 
   execFileSync(kuboBinary, ['init'], {stdio: 'ignore', env})
-  // no public bootstrap peers and no mDNS: the mesh is exactly the nodes we connect below
-  execFileSync(kuboBinary, ['bootstrap', 'rm', '--all'], {stdio: 'ignore', env})
-  execFileSync(kuboBinary, ['config', '--json', 'Discovery.MDNS.Enabled', 'false'], {stdio: 'ignore', env})
+  if (!publicNetwork) {
+    // no public bootstrap peers and no mDNS: the mesh is exactly the nodes we connect below
+    execFileSync(kuboBinary, ['bootstrap', 'rm', '--all'], {stdio: 'ignore', env})
+    execFileSync(kuboBinary, ['config', '--json', 'Discovery.MDNS.Enabled', 'false'], {stdio: 'ignore', env})
+  }
 
   const configPath = path.join(dir, 'config')
   const kuboConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'))
   kuboConfig.Addresses.API = `/ip4/127.0.0.1/tcp/${config.apiPort}`
   kuboConfig.Addresses.Gateway = `/ip4/127.0.0.1/tcp/${config.gatewayPort}`
-  // /ws so browser + libp2p-js clients can dial these nodes, same as pkc-js's test server
-  kuboConfig.Addresses.Swarm = [`/ip4/127.0.0.1/tcp/${config.swarmPort}/ws`]
+  // /ws so browser + libp2p-js clients can dial these nodes, same as pkc-js's test server. A
+  // public-network node also needs plain tcp/quic to be dialable by the rest of the network.
+  kuboConfig.Addresses.Swarm = publicNetwork
+    ? [
+        `/ip4/0.0.0.0/tcp/${config.swarmPort}`,
+        `/ip4/0.0.0.0/udp/${config.swarmPort}/quic-v1`,
+        `/ip4/0.0.0.0/tcp/${config.swarmPort + 1}/ws`,
+      ]
+    : [`/ip4/127.0.0.1/tcp/${config.swarmPort}/ws`]
   kuboConfig.API.HTTPHeaders['Access-Control-Allow-Origin'] = ['*']
   kuboConfig.API.HTTPHeaders['Access-Control-Allow-Methods'] = ['POST', 'GET']
   kuboConfig.Gateway.HTTPHeaders['Access-Control-Allow-Origin'] = ['*']
@@ -114,6 +164,7 @@ export const startKuboNode = async ({config, dir, exposeRoutingApi}: StartKuboNo
   kuboConfig.Gateway.HTTPHeaders['Access-Control-Expose-Headers'] = ['*']
   kuboConfig.Gateway.HTTPHeaders['Access-Control-Allow-Methods'] = ['*']
   if (exposeRoutingApi) kuboConfig.Gateway.ExposeRoutingAPI = true
+  if (httpRouters?.length) kuboConfig.Routing = pkcRoutingConfig(httpRouters)
   // A gateway that caches IPNS records for the record's full TTL would report a propagation time
   // that is really "how long the gateway held a stale record". 10s matches pkc-js's test server.
   kuboConfig.Ipns.MaxCacheTTL = '10s'

@@ -147,7 +147,7 @@ test('benchmark', async () => {
     reportReplies[metricsKey] = metrics
     let post: any
     try {
-      const hostPost = await postToServer<HostPost>('/reply-propagation/post')
+      const hostPost = await postToServer<HostPost>('/reply-propagation/post', {benchmarkOptionsName})
       console.log(`sample ${sampleIndex + 1}/${samples}: post ${hostPost.postCid} on community ${hostPost.communityAddress}`)
       delete reportReplies[metricsKey]
       metricsKey = hostPost.postCid
@@ -168,7 +168,10 @@ test('benchmark', async () => {
       console.log(`  loaded post in ${metrics.postInitialLoadTimeSeconds}s (replyCount=${post.replyCount ?? 0})`)
 
       // 2. the other client publishes a reply, and it succeeds
-      const hostReply = await postToServer<HostReply>('/reply-propagation/reply', {postCid: hostPost.postCid})
+      const hostReply = await postToServer<HostReply>('/reply-propagation/reply', {
+        benchmarkOptionsName,
+        postCid: hostPost.postCid,
+      })
       metrics.replyPublishTimeSeconds = hostReply.replyPublishTimeSeconds
       console.log(`  other client published reply ${hostReply.replyCid} in ${hostReply.replyPublishTimeSeconds}s`)
 

@@ -43,6 +43,26 @@ REPLY_PROPAGATION_SAMPLES=1 npm start -- --benchmark reply-propagation   # quick
 
 Each sample is a fresh post and a fresh reply; the report medians over `samples` (3 by default).
 
+#### remote community cells
+
+The `remote community, reader: …` cells run the same measurement against a community that lives on
+**another machine** and is reached over the public network (a test community whose `question`
+challenge answer its owner publishes in the community's own settings, so the benchmark answers the
+challenge instead of needing a moderator role). Both clients still run locally — only the community
+is remote, which is the point: it measures what a reply update actually costs a client when the
+community is a remote node, with production gateways/routers/pubsub providers in between.
+
+For the kubo reader the harness boots a kubo node on the public network and writes the same
+`Routing` config pkc-js writes for a production node (routers for `find-providers`/`provide`,
+`get-ipns` to the not-supported sentinel, so IPNS resolves over ipns-over-pubsub) **before**
+starting it — otherwise pkc-js notices the config change on init, rewrites it and POSTs `/shutdown`
+to the node mid-benchmark.
+
+Note the first sample of a cell also pays the reading client's cold start (a fresh kubo node has to
+bootstrap into the network and join the community's IPNS pubsub topic — measured at ~60s, against
+~0.4s for every sample after it), so read the per-sample values in `report.json`, not just the
+median, when a cell has few samples.
+
 ### load-communities benchmark
 
 `load-communities` loads **every** production 5chan board over Helia/libp2p-js in pure-P2P

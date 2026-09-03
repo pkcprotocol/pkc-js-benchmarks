@@ -4,6 +4,8 @@ import {fileURLToPath} from 'node:url'
 import PKC from '@pkcprotocol/pkc-js'
 import {startKuboNode, connectKuboNodes, type KuboNode} from './kubo-nodes.ts'
 import {localKuboNodes, kuboRpcUrl} from './local-kubo-config.ts'
+import {buildPkcOptions} from './build-pkc-options.ts'
+import type {ReplyPropagationBenchmarkOptions} from '../types.ts'
 
 // The node-side half of the reply-propagation benchmark: a community that accepts publications
 // headlessly, plus the *publishing* client. The *reading* client lives in the benchmark itself
@@ -47,11 +49,24 @@ export interface ReplyPropagationReply {
   replyPublishTimeSeconds: number
 }
 
-const publishAndWaitForSuccess = async (publication: any, label: string): Promise<{cid: string; timeSeconds: number}> => {
+const publishAndWaitForSuccess = async (
+  publication: any,
+  label: string,
+  challengeAnswers?: string[],
+): Promise<{cid: string; timeSeconds: number}> => {
   const beforeTimestamp = Date.now()
   return new Promise<{cid: string; timeSeconds: number}>(async (resolve, reject) => {
     const timer = setTimeout(() => reject(Error(`${label} timed out after 120s`)), 1000 * 120)
     publication.on('error', (e: Error) => console.log(`reply-propagation ${label} error:`, e.message))
+    // a remote community may hold a challenge open for us (the local one has challenges: [])
+    publication.on('challenge', () => {
+      if (!challengeAnswers?.length) {
+        clearTimeout(timer)
+        reject(Error(`${label} got a challenge but the benchmark options carry no challengeAnswers`))
+        return
+      }
+      publication.publishChallengeAnswers({challengeAnswers})
+    })
     publication.once('challengeverification', (verification: any) => {
       clearTimeout(timer)
       if (!verification.challengeSuccess) {
@@ -81,10 +96,55 @@ class ReplyPropagationHost {
   private community?: any
   private communityNode?: KuboNode
   private startPromise?: Promise<void>
+  // remote-community mode: one publishing client per distinct publisher transport, and one
+  // public-network kubo node shared by whichever reader cells ask for it
+  private remotePublishers = new Map<string, Promise<PkcLike>>()
+  private publicReaderNodePromise?: Promise<KuboNode>
 
   async start(): Promise<void> {
     if (!this.startPromise) this.startPromise = this._start()
     return this.startPromise
+  }
+
+  // A kubo node on the real network for the reading client, configured the way pkc-js configures
+  // a production node (Routing.Routers written up front so pkc-js does not rewrite them and
+  // shut the node down). IPNS then resolves over ipns-over-pubsub, exactly as in production.
+  private async ensurePublicReaderNode(httpRouters: string[]): Promise<KuboNode> {
+    if (!this.publicReaderNodePromise) {
+      this.publicReaderNodePromise = (async () => {
+        const node = await startKuboNode({
+          config: localKuboNodes.publicReader,
+          dir: path.join(dataPath, 'kubo-public-reader'),
+          publicNetwork: true,
+          httpRouters,
+        })
+        this.nodes.push(node)
+        this._killNodesOnProcessExit()
+        return node
+      })()
+    }
+    return this.publicReaderNodePromise
+  }
+
+  private async ensureRemotePublisher(options: ReplyPropagationBenchmarkOptions): Promise<PkcLike> {
+    const key = JSON.stringify(options.publisherPkcOptions ?? {})
+    let publisher = this.remotePublishers.get(key)
+    if (!publisher) {
+      publisher = (async () => {
+        const pkc = (await PKC(buildPkcOptions(options.publisherPkcOptions ?? {}))) as unknown as PkcLike
+        pkc.on('error', (e: Error) => console.log('reply-propagation remote publisher pkc error:', e.message))
+        return pkc
+      })()
+      this.remotePublishers.set(key, publisher)
+    }
+    return publisher
+  }
+
+  private async remoteCommunityIdentifiers(options: ReplyPropagationBenchmarkOptions) {
+    const community = options.community!
+    return community.name
+      ? {communityName: community.name, communityPublicKey: community.publicKey}
+      : {communityPublicKey: community.publicKey}
   }
 
   private async _start(): Promise<void> {
@@ -143,7 +203,27 @@ class ReplyPropagationHost {
 
   // A fresh post per sample: the reading client must be watching a post whose reply has not been
   // published yet, so samples can't share one.
-  async createPost(): Promise<ReplyPropagationPost> {
+  async createPost(options: ReplyPropagationBenchmarkOptions): Promise<ReplyPropagationPost> {
+    if (options.community) {
+      if (options.readerKuboNode) await this.ensurePublicReaderNode(options.pkcOptions.httpRoutersOptions ?? [])
+      const publisherPkc = await this.ensureRemotePublisher(options)
+      const identifiers = await this.remoteCommunityIdentifiers(options)
+      const post = await publisherPkc.createComment({
+        ...identifiers,
+        signer: await publisherPkc.createSigner(),
+        title: `pkc-js benchmark reply-propagation post ${Date.now()}`,
+        content: `pkc-js benchmark reply-propagation post ${Date.now()}`,
+      })
+      const {cid} = await publishAndWaitForSuccess(post, 'post', options.community.challengeAnswers)
+      await post.stop().catch(() => {})
+      return {
+        postCid: cid,
+        communityAddress: options.community.name ?? options.community.publicKey,
+        communityPublicKey: options.community.publicKey,
+        communitySwarmMultiaddr: '', // the community is someone else's node
+      }
+    }
+
     await this.start()
     const publisherPkc = this.publisherPkc!
     const community = this.community!
@@ -163,7 +243,23 @@ class ReplyPropagationHost {
     }
   }
 
-  async publishReply(postCid: string): Promise<ReplyPropagationReply> {
+  async publishReply(options: ReplyPropagationBenchmarkOptions, postCid: string): Promise<ReplyPropagationReply> {
+    if (options.community) {
+      const publisherPkc = await this.ensureRemotePublisher(options)
+      const identifiers = await this.remoteCommunityIdentifiers(options)
+      const reply = await publisherPkc.createComment({
+        ...identifiers,
+        signer: await publisherPkc.createSigner(),
+        parentCid: postCid,
+        postCid,
+        content: `pkc-js benchmark reply-propagation reply ${Date.now()}`,
+      })
+      const {cid, timeSeconds} = await publishAndWaitForSuccess(reply, 'reply', options.community.challengeAnswers)
+      const publishedAtMs = Date.now()
+      await reply.stop().catch(() => {})
+      return {replyCid: cid, publishedAtMs, replyPublishTimeSeconds: timeSeconds}
+    }
+
     await this.start()
     const publisherPkc = this.publisherPkc!
     const community = this.community!
@@ -194,7 +290,20 @@ class ReplyPropagationHost {
   }
 
   async stop(): Promise<void> {
-    if (!this.startPromise) return
+    for (const publisher of this.remotePublishers.values()) {
+      try {
+        await (await publisher).destroy()
+      } catch (e) {
+        // already destroyed
+      }
+    }
+    this.remotePublishers.clear()
+    this.publicReaderNodePromise = undefined
+    if (!this.startPromise) {
+      await Promise.all(this.nodes.map((node) => node.stop()))
+      this.nodes = []
+      return
+    }
     this.startPromise = undefined
     try {
       await this.community?.stop()

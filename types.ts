@@ -76,11 +76,28 @@ export interface PublishBenchmarkOptions extends BaseBenchmarkOptions {
 // interactive Spam Blocker iframe, so no headless client can publish to them successfully) —
 // the harness runs its own no-challenge community on its own kubo node, and the two clients
 // each get their own kubo/helia/gateway transport. See lib/reply-propagation-host.ts.
+export interface ReplyPropagationCommunityTarget {
+  // IPNS key of an already-running community to publish to (instead of the harness's own)
+  publicKey: string
+  name?: string
+  // answers for the community's challenges, in order (a `question` challenge takes one)
+  challengeAnswers?: string[]
+}
+
 export interface ReplyPropagationBenchmarkOptions extends BaseBenchmarkOptions {
   // how many post+reply pairs to measure; the report medians over the samples (default 3)
   samples?: number
   // give up on a single sample after this long and record it as failed (default 180)
   sampleTimeoutSeconds?: number
+  // Publish to an existing community somewhere on the public network rather than to the local
+  // no-challenge community this harness boots. Both clients still run here — only the community
+  // is remote, which is the point: it measures what a remote node's reply update actually costs.
+  community?: ReplyPropagationCommunityTarget
+  // the publishing client's transport when `community` is set (production pubsub + gateways)
+  publisherPkcOptions?: PkcOptions
+  // boot a kubo node on the public network for the reading client to use, configured the way
+  // pkc-js configures a production node; the reader's pkcOptions point at its rpc/gateway ports
+  readerKuboNode?: boolean
 }
 
 export interface BenchmarkOptionsFile {
