@@ -581,16 +581,15 @@ const replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[] = [
   },
 ]
 
-// OPT-IN, NOT PART OF THE CI MATRIX (see the `if` below). The same measurement against a community
-// that actually lives on another machine, reached over the public network. Both clients still run
-// here — only the community is remote, which is the point: this is what a reply update costs a
-// real client when the community is a remote node, with production gateways/routers/pubsub
-// providers in between.
+// The same measurement against a community that actually lives on another machine, reached over
+// the public network. Both clients still run here — only the community is remote, which is the
+// point: this is what a reply update costs a real client when the community is a remote node, with
+// production gateways/routers/pubsub providers in between. The local cells above isolate the
+// pkc-js pipeline; these are the ones that track what the real network does to it, so they run on
+// every release like everything else.
 //
-// It stays opt-in because it publishes real posts and replies to a community someone else operates
-// and depends on that machine being up, neither of which belongs in an unattended benchmark that
-// runs on every release. The local cells above cover the same three reader transports on hardware
-// the CI owns.
+// They publish real posts and replies to the target community on each run, and a sample whose
+// community is unreachable records its error and moves on rather than failing the run.
 //
 // The community's `question` challenge answer is published by its owner in the community's own
 // settings, so the benchmark answers the challenge rather than needing a moderator role.
@@ -619,7 +618,7 @@ const remotePublisherPkcOptions = {
   validatePages: false,
   dataPath: '.pkc-benchmark-reply-propagation-publisher',
 }
-if (process.env.REPLY_PROPAGATION_REMOTE === '1') replyPropagationBenchmarkOptions.push(
+replyPropagationBenchmarkOptions.push(
   {
     name: 'remote community, reader: kubo rpc',
     pkcOptions: {
