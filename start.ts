@@ -40,7 +40,9 @@ const server = await startServer()
 const pkcJsVersion: string = fs.readJsonSync(path.join(rootPath, 'node_modules', '@pkcprotocol', 'pkc-js', 'package.json')).version
 const harnessCommit = (() => {
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], {cwd: rootPath, encoding: 'utf-8'}).trim()
+    // the last commit that changed the harness itself: CI commits each version's reports before
+    // benchmarking the next, and those commits must not make the same harness look like a new one
+    return execFileSync('git', ['log', '-1', '--format=%H', '--', '.', ':!reports'], {cwd: rootPath, encoding: 'utf-8'}).trim() || undefined
   } catch (e) {
     return undefined
   }

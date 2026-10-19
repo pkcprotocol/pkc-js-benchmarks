@@ -13,7 +13,8 @@ for attempt in 1 2 3 4 5; do
   git add -A reports/
   git commit -q -m "$MSG" || true # nothing new on a retry: the commit is already there
   git fetch -q origin master
-  if ! git rebase -q origin/master; then
+  # benchmark-version.sh's `npm install` rewrites package-lock.json; carry it across the rebase
+  if ! git rebase -q --autostash origin/master; then
     if git diff --name-only --diff-filter=U | grep -qv '^reports/all.json$'; then
       echo "rebase conflict outside reports/all.json, giving up on this push"
       git rebase --abort
