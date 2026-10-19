@@ -11,6 +11,8 @@ export default defineConfig({
     testTimeout: 1200000,
     hookTimeout: 1200000,
     include: file ? [`benchmark/${file}`] : ['benchmark/**/*.ts'],
+    // plain node scripts run by start.ts, not vitest tests
+    exclude: ['benchmark/**/*.script.ts'],
     browser: {
       enabled: true,
       provider: playwright({
@@ -28,5 +30,8 @@ export default defineConfig({
   },
   define: {
     'window.benchmarkOptionsName': JSON.stringify(benchmarkOptionsName),
+    // set by start.ts on the profiled repetition of a cell (lib/benchmark-client.ts isProfiledRun)
+    'window.benchmarkServerPort': JSON.stringify(process.env.BENCHMARK_SERVER_PORT || ''),
+    'window.benchmarkProfiled': JSON.stringify(process.env.BENCHMARK_PROFILED || ''),
   },
 })

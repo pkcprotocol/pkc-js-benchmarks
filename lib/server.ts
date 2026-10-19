@@ -6,11 +6,14 @@ import path from 'node:path'
 import PKC from '@pkcprotocol/pkc-js'
 import type {Server} from 'node:http'
 import {buildPkcOptions} from './build-pkc-options.ts'
-import {replyPropagationHost} from './reply-propagation-host.ts'
+import {localCommunityHost} from './local-community-host.ts'
+import {sampleComments} from './comment-sample.ts'
 import type {
   BenchmarkOptionsFile,
   BenchmarkOptionsType,
+  CommentSampleSpec,
   CommunityMetrics,
+  LocalChallengeKind,
   ReplyPropagationBenchmarkOptions,
 } from '../types.ts'
 
@@ -40,7 +43,7 @@ const pkc = await PKC(
 )
 pkc.on('error', () => {})
 
-const apiPort = argv.apiPort ?? 3000
+const apiPort = argv.apiPort ?? (Number(process.env.BENCHMARK_SERVER_PORT) || 3000)
 const app = express()
 app.use(express.json())
 
@@ -72,7 +75,7 @@ app.post('/report', async (req, res) => {
 
 // reply-propagation benchmark. The community and the publishing client live here, in the
 // benchmark server, so that the reading client in benchmark/benchmark-reply-propagation.ts is a
-// genuinely separate process (and can be a real browser). See lib/reply-propagation-host.ts.
+// genuinely separate process (and can be a real browser). See lib/local-community-host.ts.
 // The benchmark identifies itself by options name; the server reads the entry so the community
 // target and the publishing client's transport stay declared in one place (benchmark-options.ts).
 const replyPropagationOptions = async (req: express.Request): Promise<ReplyPropagationBenchmarkOptions> => {
@@ -84,32 +87,64 @@ const replyPropagationOptions = async (req: express.Request): Promise<ReplyPropa
   return found
 }
 
-app.post('/reply-propagation/post', async (req, res) => {
-  console.log('/reply-propagation/post', req.body)
-  try {
-    res.send(JSON.stringify(await replyPropagationHost.createPost(await replyPropagationOptions(req))))
-  } catch (e) {
-    console.log('/reply-propagation/post failed:', (e as Error).message)
-    res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
-  }
+// JSON in, JSON out; a failure becomes {error} with a 500 instead of an unhandled rejection
+const route = (routePath: string, handler: (body: any) => Promise<unknown>) =>
+  app.post(routePath, async (req, res) => {
+    console.log(routePath, req.body)
+    try {
+      res.send(JSON.stringify((await handler(req.body ?? {})) ?? {}))
+    } catch (e) {
+      console.log(`${routePath} failed:`, (e as Error).message)
+      res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
+    }
+  })
+
+const requireField = <T>(body: any, field: string): T => {
+  if (body?.[field] === undefined) throw Error(`missing ${field}`)
+  return body[field] as T
+}
+
+route('/reply-propagation/post', async (body) => localCommunityHost.createPost(await replyPropagationOptions({body} as express.Request)))
+route('/reply-propagation/reply', async (body) =>
+  localCommunityHost.publishReply(await replyPropagationOptions({body} as express.Request), requireField<string>(body, 'postCid')),
+)
+route('/reply-propagation/stop', async () => {
+  await localCommunityHost.stop()
+  return {stopped: true}
 })
 
-app.post('/reply-propagation/reply', async (req, res) => {
-  console.log('/reply-propagation/reply', req.body)
-  try {
-    const postCid = (req.body as {postCid?: string})?.postCid
-    if (!postCid) throw Error('missing postCid')
-    res.send(JSON.stringify(await replyPropagationHost.publishReply(await replyPropagationOptions(req), postCid)))
-  } catch (e) {
-    console.log('/reply-propagation/reply failed:', (e as Error).message)
-    res.status(500).send(JSON.stringify({error: {message: (e as Error).message}}))
-  }
+// comment-update-propagation: a fresh post, then a vote on it, then an author edit of it
+route('/local-community/post', async () => localCommunityHost.createPost({name: 'local', pkcOptions: {}}))
+route('/local-community/vote', async (body) => localCommunityHost.publishVote(requireField<string>(body, 'postCid')))
+route('/local-community/edit', async (body) =>
+  localCommunityHost.publishEdit(requireField<string>(body, 'postCid'), requireField<string>(body, 'content')),
+)
+// local-publish: where to publish, the benchmark publishes itself
+route('/local-community/target', async (body) => localCommunityHost.target((body.challenge ?? 'none') as LocalChallengeKind))
+route('/local-community/metrics/start', async (body) => {
+  localCommunityHost.startMetrics(requireField<string>(body, 'id'))
+  return {started: true}
 })
+route('/local-community/metrics/stop', async (body) => ({metrics: localCommunityHost.stopMetrics(requireField<string>(body, 'id'))}))
+route('/local-community/profile/start', async () => {
+  await localCommunityHost.startProfile()
+  return {started: true}
+})
+route('/local-community/profile/stop', async (body) => ({profile: await localCommunityHost.stopProfile(requireField<string>(body, 'label'))}))
 
-app.post('/reply-propagation/stop', async (req, res) => {
-  console.log('/reply-propagation/stop')
-  await replyPropagationHost.stop()
-  res.send(JSON.stringify({stopped: true}))
+// fetch-comment: live comments from the boards' current pages, the same ones for every cell
+app.get('/comments-sample', async (req, res) => {
+  console.log('/comments-sample', req.query)
+  const spec: CommentSampleSpec = {
+    communities: Number(req.query.communities ?? 1),
+    posts: Number(req.query.posts ?? 0),
+    replies: Number(req.query.replies ?? 0),
+  }
+  try {
+    res.send(JSON.stringify({comments: await sampleComments(pkc as never, spec)}))
+  } catch (e) {
+    res.send(JSON.stringify({error: {message: (e as Error).message}}))
+  }
 })
 
 app.get('/community', async (req, res) => {
@@ -159,7 +194,7 @@ app.get('/community', async (req, res) => {
 const listen = (): Promise<Server> =>
   new Promise((resolve, reject) => {
     try {
-      const server = app.listen(apiPort, () => {
+      const server = app.listen(apiPort, '127.0.0.1', () => {
         console.log(`api listening on port ${apiPort}`)
         resolve(server)
       })

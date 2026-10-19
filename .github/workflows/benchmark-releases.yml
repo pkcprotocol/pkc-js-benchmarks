@@ -34,7 +34,8 @@ on:
       - 'package.json'
       - 'package-lock.json'
 
-# Never run two benchmark jobs at once — they both commit and push reports.
+# Never run two release jobs at once. (benchmark-backfill.yml and benchmark-soak.yml have groups of
+# their own and run on other runners; all of them push through scripts/commit-reports.sh.)
 concurrency:
   group: benchmark-releases
   cancel-in-progress: false
@@ -49,6 +50,8 @@ jobs:
     steps:
       - run: sudo apt-get install -y xvfb
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts/commit-reports.sh rebases onto whatever was pushed meanwhile
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -56,11 +59,20 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
 
+      # seeded-board fixtures are built by a pinned old pkc-js and never change for a given builder
+      # version and spec (lib/board-fixture.ts), so they are built once and cached
+      - uses: actions/cache@v4
+        with:
+          path: .fixtures
+          key: board-fixtures-${{ hashFiles('lib/build-board-fixture.ts', 'lib/board-fixture.ts') }}
+
       - name: benchmark missing releases (oldest first)
         env:
           # On a harness push, force-rerun the current latest even if it already has a report.
           FORCE_LATEST: ${{ github.event_name == 'push' && '1' || '' }}
           INCLUDE_VERSION: ${{ github.event.inputs.version }}
+          # the remote community's challenge answer, which its owner rotates (lib/local-community-host.ts)
+          REMOTE_COMMUNITY_CHALLENGE_ANSWER: ${{ secrets.REMOTE_COMMUNITY_CHALLENGE_ANSWER }}
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions@github.com"
@@ -77,23 +89,16 @@ jobs:
             [ -z "$VER" ] && continue
             echo "::group::benchmark pkc-js v$VER ($SHA)"
 
-            # start.ts removes report.json on startup, so its presence after the run
-            # means this version benchmarked successfully.
-            if npm install "@pkcprotocol/pkc-js@$VER" && npm start && [ -f report.json ]; then
-              node lib/print-report.ts > "reports/$SHA.txt" || true
-              jq --arg sha "$SHA" 'map(. + {pkcJsCommitHash: $sha})' report.json > "reports/$SHA.json"
-              rm -f reports/all.json
-              jq -s -c 'sort_by(.[0].timestamp) | reverse' reports/*.json > reports/all.json
-              git add reports/
-              git commit -m "add benchmark report for pkc-js v$VER ($SHA)" || echo "no changes"
+            # the full matrix, plus one CPU-profiled repetition of the profilable cells; a failed
+            # cell is an entry with an `error`, so only a run with no report at all marks the
+            # version failed
+            if scripts/benchmark-version.sh "$VER" "$SHA" --profile; then
+              scripts/commit-reports.sh "add benchmark report for pkc-js v$VER ($SHA)" || echo "push failed (will retry next run)"
             else
               echo "benchmark failed / produced no report for v$VER; marking failed"
               touch "reports/$SHA.failed"
-              git add reports/
-              git commit -m "mark pkc-js v$VER ($SHA) benchmark failed" || echo "no changes"
+              scripts/commit-reports.sh "mark pkc-js v$VER ($SHA) benchmark failed" || echo "push failed (will retry next run)"
             fi
-
-            git push || echo "push failed (will retry next run)"
             echo "::endgroup::"
 
             NOW=$(date +%s)
@@ -102,3 +107,13 @@ jobs:
               break
             fi
           done
+
+      # full CPU profiles, one folder per version (v<version>-<gitHead>/); the report entries only
+      # carry the per-package summary (cpuProfile.selfMsByPackage) and the file's path in here
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-profiles-releases-${{ github.run_id }}
+          path: profiles-by-version/
+          if-no-files-found: ignore
+          retention-days: 90

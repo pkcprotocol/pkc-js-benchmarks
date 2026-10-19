@@ -22,6 +22,10 @@ export const localKuboNodes = {
   // the reading client's node when the community is remote: same role, but on the public
   // network (swarmPort + 1 is its /ws listener, see startKuboNode)
   publicReader: {name: 'public-reader', apiPort: 15104, gatewayPort: 18104, swarmPort: 24104},
+  // the script benchmarks (seeded-board, rpc-community-list, soak) run in their own process with
+  // their own two-node mesh, on ports of their own so they never meet the server's mesh above
+  scriptCommunity: {name: 'script-community', apiPort: 15111, gatewayPort: 18111, swarmPort: 24111},
+  scriptPublisher: {name: 'script-publisher', apiPort: 15112, gatewayPort: 18112, swarmPort: 24112},
 } as const satisfies Record<string, KuboNodeConfig>
 
 export const kuboRpcUrl = (node: KuboNodeConfig): string => `http://127.0.0.1:${node.apiPort}/api/v0`

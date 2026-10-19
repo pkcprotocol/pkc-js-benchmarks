@@ -2,9 +2,10 @@ import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
 import type {CommunityIdentifier, CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
+import {startRuntimeMetrics} from '../lib/runtime-metrics.ts'
+import {benchmarkServerUrl} from '../lib/benchmark-client.ts'
 
 const benchmarkOptionsType = 'resolveAddressesBenchmarkOptions'
-const benchmarkServerUrl = 'http://127.0.0.1:3000'
 const failUrl = 'http://127.0.0.2'
 
 declare const window: {benchmarkOptionsName?: string} | undefined
@@ -45,6 +46,8 @@ test('benchmark', async () => {
     throw Error('failed fetching benchmarkOptions')
   }
 
+  // memory, CPU, event loop and GC of this process over the whole cell (lib/runtime-metrics.ts)
+  const runtimeMetrics = await startRuntimeMetrics()
   const pkc = await PKC(
     buildPkcOptions({
       ...benchmarkOptions.pkcOptions,
@@ -72,7 +75,8 @@ test('benchmark', async () => {
       )
       community.on('updatingstatechange', (updatingState: string) => {
         const metrics = reportCommunities[communityName]!
-        if (updatingState === 'resolving-address') {
+        // 'resolving-name' since pkc-js 0.0.60; 'resolving-address' kept for older releases
+        if (updatingState === 'resolving-name' || updatingState === 'resolving-address') {
           beforeTimestamp = Date.now()
         }
         if (updatingState === 'fetching-ipns') {
@@ -117,6 +121,7 @@ test('benchmark', async () => {
       timestamp: Date.now(),
       timeSeconds: (Date.now() - beforeReportTimestamp) / 1000,
       runtime,
+      process: runtimeMetrics.stop(),
       communities: reportCommunities,
     }
     const res = await fetch(`${benchmarkServerUrl}/report`, {

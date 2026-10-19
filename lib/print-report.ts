@@ -3,7 +3,9 @@ import {fileURLToPath} from 'node:url'
 import path from 'node:path'
 import type {BenchmarkReport, CommunityMetrics, CommentMetrics, ReplyPropagationMetrics} from '../types.ts'
 
-const reportPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'report.json')
+// report.json by default; CI passes a merged reports/<sha>.json to print a version's whole report
+const reportPath =
+  process.argv.slice(2).find((arg) => arg.endsWith('.json')) ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'report.json')
 const reports: BenchmarkReport[] = JSON.parse(readFileSync(reportPath, 'utf-8'))
 
 let format: 'table' | 'inline' = 'table'
@@ -100,10 +102,22 @@ for (const benchmarkType in benchmarkTypesByName) {
 const formatBenchmarkTypeTitle = (string: string): string =>
   string.replace('BenchmarkOptions', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase()
 
-type ReportType = 'comment' | 'publish' | 'community' | 'reply'
+type ReportType = 'comment' | 'publish' | 'community' | 'reply' | 'generic'
+
+// the newer benchmarks print every metric they carry (see genericRows) instead of a fixed row list
+const genericBenchmarkTypes = new Set([
+  'localPublishBenchmarkOptions',
+  'commentUpdatePropagationBenchmarkOptions',
+  'seededBoardBenchmarkOptions',
+  'importTimeBenchmarkOptions',
+  'rpcCommunityListBenchmarkOptions',
+  'soakBenchmarkOptions',
+])
 
 const benchmarkTypeToReportType = (benchmarkType: string): ReportType =>
-  benchmarkType.match(/reply/i)
+  genericBenchmarkTypes.has(benchmarkType)
+    ? 'generic'
+    : benchmarkType.match(/reply/i)
     ? 'reply'
     : benchmarkType.match(/comment/i)
       ? 'comment'
@@ -155,6 +169,87 @@ const printLoadCommunitiesAggregates = (benchmark: BenchmarkReport): void => {
   }
 }
 
+interface Row {
+  benchmark: string
+  median: number | string
+  average: number | string
+  success: string
+}
+
+const unitOf = (key: string): string =>
+  key.endsWith('TimeSeconds') ? 's' : key.endsWith('MB') ? 'MB' : key.endsWith('Ms') ? 'ms' : key.endsWith('Bytes') ? 'B' : key.endsWith('Percent') ? '%' : ''
+
+const labelOf = (key: string): string =>
+  key
+    .replace(/(TimeSeconds|MB|Ms|Bytes|Percent|Count)$/, '')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+
+// Rows for the newer benchmarks: every numeric metric, as median/average/success over the samples
+// of a per-sample map (publications, updates, steadyCycles, cold/warm imports) or as the plain
+// value of a cell-level number.
+const genericRows = (benchmark: BenchmarkReport): Row[] => {
+  const rows: Row[] = []
+  if (benchmark.error) {
+    rows.push({benchmark: benchmark.unsupported ? 'unsupported' : 'error', median: benchmark.error.message, average: '', success: ''})
+  }
+  const samplesRows = (samples: Record<string, Record<string, unknown>> = {}) => {
+    const keys = new Set<string>()
+    for (const sample of Object.values(samples)) for (const [k, v] of Object.entries(sample ?? {})) if (typeof v === 'number' || v === null) keys.add(k)
+    for (const key of keys) {
+      const bag = samples as MetricBag
+      rows.push({
+        benchmark: `${labelOf(key)} (${unitOf(key)})`,
+        median: getMedian(bag, key as MetricKey),
+        average: getAverage(bag, key as MetricKey),
+        success: getSuccessRatio(bag, key as MetricKey),
+      })
+    }
+  }
+  const scalarRows = (values: Record<string, unknown> = {}, skip: string[] = []) => {
+    for (const [key, value] of Object.entries(values)) {
+      if (skip.includes(key)) continue
+      if (typeof value === 'number') rows.push({benchmark: `${labelOf(key)}${unitOf(key) ? ` (${unitOf(key)})` : ''}`, median: value, average: '', success: ''})
+      else if (value && typeof value === 'object' && /TimeSeconds$/.test(key)) {
+        // a per-sample record of plain numbers, e.g. coldImportTimeSeconds
+        const values = Object.values(value as Record<string, number>).filter((v) => typeof v === 'number')
+        const bag = Object.fromEntries(values.map((v, i) => [i, {v}])) as unknown as MetricBag
+        rows.push({benchmark: `${labelOf(key)} (s)`, median: getMedian(bag, 'v' as MetricKey), average: getAverage(bag, 'v' as MetricKey), success: `${values.length}/${values.length}`})
+      }
+    }
+  }
+  if (benchmark.publications) samplesRows(benchmark.publications as Record<string, Record<string, unknown>>)
+  if (benchmark.updates) samplesRows(benchmark.updates as Record<string, Record<string, unknown>>)
+  if (benchmark.board) {
+    scalarRows(benchmark.board as Record<string, unknown>, ['steadyCycles'])
+    if (benchmark.board.steadyCycles) samplesRows(benchmark.board.steadyCycles as Record<string, Record<string, unknown>>)
+  }
+  for (const section of [benchmark.imports, benchmark.rpc, benchmark.soak, benchmark.aggregate]) {
+    if (section) scalarRows(section as Record<string, unknown>)
+  }
+  return rows
+}
+
+// one line of process health under a benchmark (see ProcessMetrics)
+const processLine = (benchmark: BenchmarkReport): string | undefined => {
+  const describe = (label: string, m?: BenchmarkReport['process']) =>
+    m
+      ? `${label}: rss ${m.peakRssMB ?? '-'}MB, heap after gc ${m.heapUsedAfterGcMB ?? '-'}MB, cpu ${m.cpuUserMs !== undefined && m.cpuUserMs !== null ? Math.round((m.cpuUserMs ?? 0) + (m.cpuSystemMs ?? 0)) : '-'}ms, event loop p99 ${m.eventLoopDelayP99Ms ?? '-'}ms max ${m.eventLoopDelayMaxMs ?? '-'}ms, gc ${m.gcPauseTotalMs ?? '-'}ms` +
+        (m.longTaskTotalMs !== undefined ? `, long tasks ${m.longTaskTotalMs}ms` : '') +
+        (m.kuboPeakRssMBByNode ? `, kubo rss ${JSON.stringify(m.kuboPeakRssMBByNode)}MB` : '')
+      : undefined
+  const parts = [describe('process', benchmark.process), describe('community', benchmark.communityProcess)].filter(Boolean)
+  const profile = benchmark.cpuProfile ?? benchmark.communityCpuProfile
+  if (profile) {
+    const top = Object.entries(profile.selfMsByPackage)
+      .slice(0, 6)
+      .map(([pkg, ms]) => `${pkg} ${Math.round(ms)}ms`)
+      .join(', ')
+    parts.push(`cpu profile (${Math.round(profile.sampledTimeMs)}ms sampled): ${top}`)
+  }
+  return parts.length ? `  ${benchmark.name} (${benchmark.runtime}) ${parts.join(' | ')}` : undefined
+}
+
 if (format === 'table') {
   for (const benchmarkType in benchmarkTypes) {
     const table: Record<string, Record<string, unknown>> = {}
@@ -165,9 +260,12 @@ if (format === 'table') {
     table[getNextRowName()] = {}
 
     for (const benchmark of benchmarkTypes[benchmarkType]!) {
-      table[`${benchmark.name}`] = {}
+      table[`${benchmark.name}${benchmark.environmentDependent ? ' [environment-dependent]' : ''}`] = {}
 
       const reportType = benchmarkTypeToReportType(benchmark.type as string)
+      if (reportType === 'generic' || (benchmark.error && reportType !== 'reply')) {
+        for (const row of genericRows(benchmark)) table[getNextRowName()] = {runtime: benchmark.runtime, ...row}
+      }
       if (reportType === 'community') {
         const communities = benchmark.communities ?? {}
         if (hasTimePropName(communities, 'resolvingAddressTimeSeconds')) {
@@ -294,6 +392,10 @@ if (format === 'table') {
     if (benchmarkType === 'loadCommunitiesBenchmarkOptions') {
       for (const benchmark of benchmarkTypes[benchmarkType]!) printLoadCommunitiesAggregates(benchmark)
     }
+    for (const benchmark of benchmarkTypes[benchmarkType]!) {
+      const line = processLine(benchmark)
+      if (line) console.log(line)
+    }
   }
 }
 
@@ -305,9 +407,21 @@ if (format === 'inline') {
     console.log(`${formatBenchmarkTypeTitle(benchmarkType)}`)
     for (const benchmark of benchmarkTypes[benchmarkType]!) {
       console.log('')
-      console.log(`benchmark: ${benchmark.name} (${benchmark.runtime})`)
+      console.log(`benchmark: ${benchmark.name} (${benchmark.runtime})${benchmark.environmentDependent ? ' [environment-dependent]' : ''}`)
 
       const reportType = benchmarkTypeToReportType(benchmark.type as string)
+      if (reportType === 'generic' || (benchmark.error && reportType !== 'reply')) {
+        for (const row of genericRows(benchmark)) {
+          console.log(
+            `${row.benchmark}:`.padEnd(pad * 2) +
+              `median ${row.median}`.padEnd(pad) +
+              (row.average !== '' ? `| average ${row.average}`.padEnd(pad) : '') +
+              (row.success ? `| success ${row.success}` : ''),
+          )
+        }
+      }
+      const line = processLine(benchmark)
+      if (line) console.log(line.trim())
       if (reportType === 'community') {
         const communities = benchmark.communities ?? {}
         if (hasTimePropName(communities, 'resolvingAddressTimeSeconds')) {

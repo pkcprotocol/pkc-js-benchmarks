@@ -1,0 +1,178 @@
+# Backfill new (or changed) benchmarks over the most recent pkc-js releases.
+#
+# benchmark-releases.yml only benchmarks versions that have no report yet, so a benchmark added to
+# the harness would otherwise only ever appear from the next release on. This workflow runs just
+# the named benchmarks on the last N releases that don't have them yet, and MERGES the result into
+# each version's existing report (scripts/merge-report.ts) — it never touches the release-time
+# entries of the other benchmarks, and it never marks a version failed (a failed cell is an entry
+# with an `error`).
+#
+# Comparability: backfilled numbers are measured long after their release on whatever runner GitHub
+# hands out, so the job also benchmarks a fixed ANCHOR version first and again every few versions,
+# and stamps every backfilled entry with its ratio to the nearest preceding anchor run
+# (scripts/anchor-ratios.ts). Big steps (v0.0.108's page-generation rewrite) show in the absolute
+# numbers on any runner; for 10-20% drifts compare the ratios.
+#
+# Re-dispatch to continue after the time budget: versions that already have the benchmarks are
+# skipped.
+name: backfill benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      benchmarks:
+        description: 'start.ts --benchmark names to backfill (space-separated)'
+        required: true
+        default: 'local-publish comment-update-propagation seeded-board import-time rpc-community-list'
+        type: string
+      last:
+        description: 'How many of the most recently published versions to consider'
+        required: false
+        default: '20'
+        type: string
+      versions:
+        description: 'Explicit versions instead (space-separated, re-measures even if present)'
+        required: false
+        type: string
+      anchor_version:
+        description: 'Version benchmarked in the same job as the reference for anchor ratios'
+        required: false
+        default: '0.0.114'
+        type: string
+      anchor_every:
+        description: 'Re-run the anchor every N versions'
+        required: false
+        default: '5'
+        type: string
+      profile:
+        description: 'Also run the CPU-profiled repetition of profilable cells'
+        required: false
+        default: true
+        type: boolean
+
+# Its own group, not benchmark-releases': GitHub keeps only ONE pending run per group, so a release
+# cron queued behind it would silently cancel a pending run of this. They run on separate runners
+# (no shared ports or CPU) and push through scripts/commit-reports.sh, which handles the race.
+concurrency:
+  group: benchmark-backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push report commits
+  actions: write # re-dispatch itself when the time budget runs out
+
+jobs:
+  backfill:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - run: sudo apt-get install -y xvfb
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts/commit-reports.sh rebases onto whatever was pushed meanwhile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+
+      - uses: actions/cache@v4
+        with:
+          path: .fixtures
+          key: board-fixtures-${{ hashFiles('lib/build-board-fixture.ts', 'lib/board-fixture.ts') }}
+
+      - name: backfill
+        env:
+          BENCHMARKS: ${{ github.event.inputs.benchmarks }}
+          LAST: ${{ github.event.inputs.last }}
+          VERSIONS: ${{ github.event.inputs.versions }}
+          ANCHOR_VERSION: ${{ github.event.inputs.anchor_version }}
+          ANCHOR_EVERY: ${{ github.event.inputs.anchor_every }}
+          PROFILE: ${{ github.event.inputs.profile }}
+          GH_TOKEN: ${{ github.token }}
+          REMOTE_COMMUNITY_CHALLENGE_ANSWER: ${{ secrets.REMOTE_COMMUNITY_CHALLENGE_ANSWER }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+
+          ANCHOR_ARGS=()
+          for b in $BENCHMARKS; do ANCHOR_ARGS+=(--benchmark "$b"); done
+          START_ARGS=("${ANCHOR_ARGS[@]}")
+          [ "$PROFILE" = "true" ] && START_ARGS+=(--profile)
+
+          if [ -n "$VERSIONS" ]; then
+            REGISTRY=$(curl -s https://registry.npmjs.org/@pkcprotocol%2fpkc-js)
+            TARGETS=()
+            for v in $VERSIONS; do TARGETS+=("$v $(echo "$REGISTRY" | jq -r --arg v "$v" '.versions[$v].gitHead')"); done
+          else
+            mapfile -t TARGETS < <(MISSING_BENCHMARKS="$BENCHMARKS" LAST="$LAST" node scripts/list-missing-benchmark-versions.ts)
+          fi
+          echo "versions to backfill: ${TARGETS[*]:-(none)}"
+          [ ${#TARGETS[@]} -eq 0 ] && exit 0
+
+          ANCHOR_SHA=$(curl -s "https://registry.npmjs.org/@pkcprotocol%2fpkc-js/$ANCHOR_VERSION" | jq -r .gitHead)
+          mkdir -p anchors
+          run_anchor() {
+            echo "::group::anchor run: pkc-js v$ANCHOR_VERSION"
+            rm -rf profiles report.json
+            npm install --no-save --no-audit --no-fund "@pkcprotocol/pkc-js@$ANCHOR_VERSION" \
+              && timeout 330m npm start -- "${ANCHOR_ARGS[@]}" \
+              && cp report.json "anchors/anchor-$(date +%s).json" && cp report.json anchor.json
+            echo "::endgroup::"
+          }
+
+          START=$(date +%s)
+          BUDGET=$((5 * 3600))
+          COUNT=0
+          for line in "${TARGETS[@]}"; do
+            VER=$(echo "$line" | awk '{print $1}')
+            SHA=$(echo "$line" | awk '{print $2}')
+            [ -z "$VER" ] || [ "$SHA" = "null" ] && continue
+            if [ $((COUNT % ANCHOR_EVERY)) -eq 0 ]; then run_anchor; fi
+            COUNT=$((COUNT + 1))
+
+            echo "::group::backfill pkc-js v$VER ($SHA): $BENCHMARKS"
+            if MERGE=1 scripts/benchmark-version.sh "$VER" "$SHA" "${START_ARGS[@]}"; then
+              MEASURED_AT=$(jq -r '.[0].measuredAt' report.json)
+              if [ -f anchor.json ] && [ "$VER" != "$ANCHOR_VERSION" ]; then
+                node scripts/anchor-ratios.ts anchor.json "$ANCHOR_VERSION" "reports/$SHA.json" "$MEASURED_AT"
+              fi
+              scripts/commit-reports.sh "backfill $BENCHMARKS for pkc-js v$VER ($SHA)" || echo "push failed; the next run re-measures this version"
+            else
+              # never a .failed marker from a partial run: the version's release-time report stays as it was
+              echo "backfill produced no report for v$VER; leaving its report untouched"
+            fi
+            echo "::endgroup::"
+
+            NOW=$(date +%s)
+            if [ $((NOW - START)) -gt $BUDGET ]; then
+              # versions already backfilled are skipped by the next run, so it just continues; an
+              # explicit version list is not re-dispatched (it would re-measure the same versions)
+              if [ -z "$VERSIONS" ]; then
+                echo "time budget reached; dispatching another run for the remaining versions"
+                gh workflow run benchmark-backfill.yml --ref "$GITHUB_REF_NAME" \
+                  -f benchmarks="$BENCHMARKS" -f last="$LAST" -f anchor_version="$ANCHOR_VERSION" \
+                  -f anchor_every="$ANCHOR_EVERY" -f profile="$PROFILE"
+              else
+                echo "time budget reached; re-dispatch with the remaining versions"
+              fi
+              break
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-profiles-backfill-${{ github.run_id }}
+          path: profiles-by-version/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anchor-reports-${{ github.run_id }}
+          path: anchors/
+          if-no-files-found: ignore
+          retention-days: 90

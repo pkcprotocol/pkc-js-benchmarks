@@ -9,6 +9,8 @@ export default defineConfig({
     testTimeout: 1200000,
     hookTimeout: 1200000,
     include: ['benchmark/**/*.ts'],
+    // plain node scripts run by start.ts, not vitest tests
+    exclude: ['benchmark/**/*.script.ts'],
     environment: 'node',
     globals: false,
     env: {

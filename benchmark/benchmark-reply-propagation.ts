@@ -2,9 +2,11 @@ import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
 import type {ReplyPropagationBenchmarkOptions, BenchmarkReport, ReplyPropagationMetrics, Runtime} from '../types.ts'
+import {startRuntimeMetrics} from '../lib/runtime-metrics.ts'
+import {benchmarkServerUrl} from '../lib/benchmark-client.ts'
 
 // The READING client. The community and the publishing client run in the benchmark server (see
-// lib/reply-propagation-host.ts), so the publisher really is a separate process with its own PKC
+// lib/local-community-host.ts), so the publisher really is a separate process with its own PKC
 // and its own kubo node — this file only ever reads.
 //
 // One sample: ask the server for a fresh post -> update() it here until its first CommentUpdate
@@ -12,7 +14,6 @@ import type {ReplyPropagationBenchmarkOptions, BenchmarkReport, ReplyPropagation
 // to "the reply is visible here".
 
 const benchmarkOptionsType = 'replyPropagationBenchmarkOptions'
-const benchmarkServerUrl = 'http://127.0.0.1:3000'
 
 declare const window: {benchmarkOptionsName?: string} | undefined
 
@@ -77,6 +78,8 @@ test('benchmark', async () => {
   const samples = benchmarkOptions.samples ?? 3
   const sampleTimeoutMs = (benchmarkOptions.sampleTimeoutSeconds ?? 180) * 1000
 
+  // memory, CPU, event loop and GC of this process over the whole cell (lib/runtime-metrics.ts)
+  const runtimeMetrics = await startRuntimeMetrics()
   const pkc = await PKC(buildPkcOptions(benchmarkOptions.pkcOptions))
   pkc.on('error', (pkcErrorEvent: Error) => console.log('pkcErrorEvent:', pkcErrorEvent.message))
 
@@ -217,6 +220,7 @@ test('benchmark', async () => {
       timestamp: Date.now(),
       timeSeconds: (Date.now() - beforeReportTimestamp) / 1000,
       runtime,
+      process: runtimeMetrics.stop(),
       replies: reportReplies,
     }
     const res = await fetch(`${benchmarkServerUrl}/report`, {

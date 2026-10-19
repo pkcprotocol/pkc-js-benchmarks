@@ -1,0 +1,76 @@
+# Weekly long-running benchmarks, too slow for every release:
+#   - soak: one local community taking a steady trickle of publications for 30+ minutes (heap growth
+#     per publication, repo gc stall, delete time)
+#   - seeded-board on the M board (2k posts / ~113k comments), which takes 8-12 minutes a version
+#     and is expected to time out or crash on versions before v0.0.108
+# Runs on the latest release (or the versions given), merging into each version's report.
+name: benchmark soak and large boards
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Sundays 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: 'Versions to run (space-separated; default: the latest release)'
+        required: false
+        type: string
+      soak_minutes:
+        description: 'Soak duration in minutes'
+        required: false
+        default: '30'
+        type: string
+
+# Its own group (see benchmark-backfill.yml for why not benchmark-releases)
+concurrency:
+  group: benchmark-soak
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  soak:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - run: sudo apt-get install -y xvfb
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # scripts/commit-reports.sh rebases onto whatever was pushed meanwhile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+
+      - uses: actions/cache@v4
+        with:
+          path: .fixtures
+          key: board-fixtures-${{ hashFiles('lib/build-board-fixture.ts', 'lib/board-fixture.ts') }}
+
+      - name: soak + large boards
+        env:
+          VERSIONS: ${{ github.event.inputs.versions }}
+          SOAK_MINUTES: ${{ github.event.inputs.soak_minutes || '30' }}
+          BENCHMARK_LARGE_BOARDS: '1'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions@github.com"
+          REGISTRY=$(curl -s https://registry.npmjs.org/@pkcprotocol%2fpkc-js)
+          [ -z "$VERSIONS" ] && VERSIONS=$(echo "$REGISTRY" | jq -r '."dist-tags".latest')
+          for VER in $VERSIONS; do
+            SHA=$(echo "$REGISTRY" | jq -r --arg v "$VER" '.versions[$v].gitHead')
+            echo "::group::soak + board M: pkc-js v$VER ($SHA)"
+            if MERGE=1 scripts/benchmark-version.sh "$VER" "$SHA" --benchmark soak --benchmark seeded-board --only 'board M' --profile; then
+              scripts/commit-reports.sh "add soak and board M benchmarks for pkc-js v$VER ($SHA)" || echo "push failed"
+            fi
+            echo "::endgroup::"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-profiles-soak-${{ github.run_id }}
+          path: profiles-by-version/
+          if-no-files-found: ignore
+          retention-days: 90

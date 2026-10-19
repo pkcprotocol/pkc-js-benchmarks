@@ -2,9 +2,10 @@ import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
 import type {PublishBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
+import {startRuntimeMetrics} from '../lib/runtime-metrics.ts'
+import {benchmarkServerUrl} from '../lib/benchmark-client.ts'
 
 const benchmarkOptionsType = 'publishBenchmarkOptions'
-const benchmarkServerUrl = 'http://127.0.0.1:3000'
 
 declare const window: {benchmarkOptionsName?: string} | undefined
 
@@ -47,6 +48,8 @@ test('benchmark', async () => {
     throw Error('failed fetching benchmarkOptions')
   }
 
+  // memory, CPU, event loop and GC of this process over the whole cell (lib/runtime-metrics.ts)
+  const runtimeMetrics = await startRuntimeMetrics()
   const pkc = await PKC(buildPkcOptions(benchmarkOptions.pkcOptions))
   pkc.on('error', (pkcErrorEvent: Error) => console.log('pkcErrorEvent:', pkcErrorEvent.message))
 
@@ -72,7 +75,7 @@ test('benchmark', async () => {
           on: (e: string, h: (arg: any) => void) => void
           once: (e: string, h: (arg: any) => void) => void
           publish: () => void
-          publishChallengeAnswers: (a: string[]) => void
+          publishChallengeAnswers: (a: {challengeAnswers: string[]}) => Promise<void>
           stop: () => Promise<void>
         }>
       }).createComment({
@@ -94,7 +97,10 @@ test('benchmark', async () => {
         console.log(`waiting ${publishChallengeAnswerDelay / 1000}s before publishing challenge answer...`)
         await new Promise((r) => setTimeout(r, publishChallengeAnswerDelay))
         beforeTimestamp += publishChallengeAnswerDelay
-        comment.publishChallengeAnswers(['pkc-js benchmark wrong answer'])
+        // pkc-js takes {challengeAnswers}: a bare array arrives as challengeAnswers: undefined
+        comment
+          .publishChallengeAnswers({challengeAnswers: ['pkc-js benchmark wrong answer']})
+          .catch((e: Error) => console.log(`failed publishing challenge answer ${communityName}:`, e.message))
       })
       comment.once('challengeverification', () => {
         reportPublish[communityName]!.challengeVerificationTimeSeconds =
@@ -107,7 +113,8 @@ test('benchmark', async () => {
       })
       comment.on('publishingstatechange', (publishingState: string) => {
         const metrics = reportPublish[communityName]!
-        if (publishingState === 'resolving-community-address') {
+        // 'resolving-community-name' since pkc-js 0.0.60; the old name kept for older releases
+        if (publishingState === 'resolving-community-name' || publishingState === 'resolving-community-address') {
           beforeTimestamp = Date.now()
         }
         if (publishingState === 'fetching-community-ipns') {
@@ -176,6 +183,7 @@ test('benchmark', async () => {
       timestamp: Date.now(),
       timeSeconds: (Date.now() - beforeReportTimestamp) / 1000,
       runtime,
+      process: runtimeMetrics.stop(),
       communities: reportPublish,
     }
     const res = await fetch(`${benchmarkServerUrl}/report`, {

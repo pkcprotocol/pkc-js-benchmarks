@@ -1,8 +1,9 @@
 import {test} from 'vitest'
 import type {CommunityIdentifier, CommunityListBenchmarkOptions, BenchmarkReport, CommunityMetrics, Runtime} from '../types.ts'
+import {startRuntimeMetrics} from '../lib/runtime-metrics.ts'
+import {benchmarkServerUrl} from '../lib/benchmark-client.ts'
 
 const benchmarkOptionsType = 'gatewayFetchIpnsBenchmarkOptions'
-const benchmarkServerUrl = 'http://127.0.0.1:3000'
 
 declare const window: {benchmarkOptionsName?: string} | undefined
 
@@ -65,6 +66,8 @@ test('benchmark', async () => {
     throw Error(`no pkcOptions.ipfsGatewayUrls`)
   }
 
+  // memory, CPU, event loop and GC of this process over the whole cell (lib/runtime-metrics.ts)
+  const runtimeMetrics = await startRuntimeMetrics()
   const beforeReportTimestamp = Date.now()
   const reportCommunities: Record<string, CommunityMetrics> = {}
 
@@ -98,6 +101,7 @@ test('benchmark', async () => {
       timestamp: Date.now(),
       timeSeconds: (Date.now() - beforeReportTimestamp) / 1000,
       runtime,
+      process: runtimeMetrics.stop(),
       communities: reportCommunities,
     }
     const res = await fetch(`${benchmarkServerUrl}/report`, {

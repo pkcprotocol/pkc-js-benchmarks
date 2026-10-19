@@ -2,6 +2,7 @@ import {test} from 'vitest'
 import PKC from '@pkcprotocol/pkc-js'
 import {buildPkcOptions} from '../lib/build-pkc-options.ts'
 import {discoverCommunities, runPool} from '../lib/discover-communities.ts'
+import {startRuntimeMetrics} from '../lib/runtime-metrics.ts'
 import type {
   CommunityIdentifier,
   LoadCommunitiesBenchmarkOptions,
@@ -10,6 +11,7 @@ import type {
   NetSnapshot,
   Runtime,
 } from '../types.ts'
+import {benchmarkServerUrl} from '../lib/benchmark-client.ts'
 
 // load-communities benchmark — mirrors investigate_why_5chan_p2p_is_slow inside this harness.
 // Discovers every production 5chan board live from GitHub (nothing hardcoded), loads them in
@@ -23,7 +25,6 @@ import type {
 // node cell behaves like the reference's BROWSER=1 mode.
 
 const benchmarkOptionsType = 'loadCommunitiesBenchmarkOptions'
-const benchmarkServerUrl = 'http://127.0.0.1:3000'
 
 declare const window: {benchmarkOptionsName?: string} | undefined
 
@@ -129,6 +130,8 @@ test('benchmark', async () => {
     }
   }
 
+  // memory, CPU, event loop and GC of this process over the whole cell (lib/runtime-metrics.ts)
+  const runtimeMetrics = await startRuntimeMetrics()
   const pkc = await PKC(pkcInput as Parameters<typeof PKC>[0])
   pkc.on('error', (pkcErrorEvent: Error) => console.log('pkcErrorEvent:', pkcErrorEvent.message))
 
@@ -208,7 +211,8 @@ test('benchmark', async () => {
 
       community.on('updatingstatechange', (updatingState: string) => {
         transitions.push({state: updatingState, at: Date.now() - start})
-        if (updatingState === 'resolving-address') {
+        // 'resolving-name' since pkc-js 0.0.60; 'resolving-address' kept for older releases
+        if (updatingState === 'resolving-name' || updatingState === 'resolving-address') {
           beforeTimestamp = Date.now()
         }
         if (updatingState === 'fetching-ipns') {
@@ -262,6 +266,7 @@ test('benchmark', async () => {
       timestamp: Date.now(),
       timeSeconds: (Date.now() - beforeReportTimestamp) / 1000,
       runtime,
+      process: runtimeMetrics.stop(),
       communities: reportCommunities,
       discoveredCount,
       loadedCount,

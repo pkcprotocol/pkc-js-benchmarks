@@ -1,7 +1,7 @@
 import fiveChanDirectories from './multisubs/5chan-directories.json' with {type: 'json'}
 import {localKuboNodes, kuboGatewayUrl, kuboHttpRouterUrl, kuboRpcUrl} from './lib/local-kubo-config.ts'
 import type {
-  CommentIdentifier,
+  CommentSampleSpec,
   CommentListBenchmarkOptions,
   CommunityIdentifier,
   CommunityListBenchmarkOptions,
@@ -9,6 +9,13 @@ import type {
   PublishBenchmarkOptions,
   ReplyPropagationBenchmarkOptions,
   BenchmarkOptionsFile,
+  BoardFixtureSpec,
+  CommentUpdatePropagationBenchmarkOptions,
+  ImportTimeBenchmarkOptions,
+  LocalPublishBenchmarkOptions,
+  RpcCommunityListBenchmarkOptions,
+  SeededBoardBenchmarkOptions,
+  SoakBenchmarkOptions,
 } from './types.ts'
 
 const dataPath = '.pkc-benchmark'
@@ -270,45 +277,14 @@ let gatewayFetchIpnsBenchmarkOptions: CommunityListBenchmarkOptions[] = [
   }
 ]
 
-// TODO, post, reply, 10 posts/replies from different subs, 10 posts/replies from the same sub
-// CIDs below are stale (from previous .eth communities) and need to be regenerated for the
-// .bso communities they're paired with — kept as placeholders so the wiring/types remain valid.
-const oneSubCommunity = communities.find((c) => c.name === 'business-and-finance.bso')!
-const withCommunity = (cid: string, community: CommunityIdentifier): CommentIdentifier => ({
-  cid,
-  communityName: community.name,
-  communityPublicKey: community.publicKey,
-})
-const post: CommentIdentifier = withCommunity('QmQ5iZNEiiitJmefk1zRqYxa7fAuQo4vy3XAUy3UpUMhwG', oneSubCommunity)
-const reply: CommentIdentifier = withCommunity('QmWtN7Uue8Pw3Gg1V7csVjnsswpdJQbW3aHNk2gRfjPjig', oneSubCommunity)
-const oneSub5Posts5Replies: CommentIdentifier[] = [
-  // posts
-  'QmWuSQNZszHSPtwLmr41mS1drMnzCKfp7GLQUmdVg5aoZ1',
-  'QmXdSw2ydiKLnMjxyEHQye7ZUa5cHQKmKiSMF9yRfMLkrs',
-  'QmQ5iZNEiiitJmefk1zRqYxa7fAuQo4vy3XAUy3UpUMhwG',
-  'Qmaq3DgXQEdfGhusKtJCTZU3HyXrPg8TKGuQLcQrgvCgps',
-  'QmagGzGvUQDy7K1Kgc3d1H8YU8n9dYViaExZHWfFy6Krma',
-  // replies
-  'QmVwcGCHrviS44YBakEuBuNn8xCvgv1Z3TQswqRraq3APg',
-  'QmcPc94WwdtF2xzFojDvanQp7V3S4FChNrG1vXwbxamcp3',
-  'QmfRNP1TC9B1R1AgoW4ts86ZsWuPNrhShedxJ3axzHQ3h9',
-  'QmbAwAApoVfmRmxmSdHuMA9uDVL8pd13LGM1TTU4hSXDUX',
-  'QmZPfobp6UcroLtPiiAFgsAQX8RQh3WwfiCbzyHi22rBRR',
-].map((cid) => withCommunity(cid, oneSubCommunity))
-const tenSubs5Posts5Replies: CommentIdentifier[] = [
-  // posts
-  'QmYZiS4uDR6S2vC65fmpktjH3mBn27gk3c4HkFEpf3SN61',
-  'QmcYV2yoSkXazG9puqHPbApfVg6FfmrHp3tSCyNz9CBLci',
-  'QmQ5iZNEiiitJmefk1zRqYxa7fAuQo4vy3XAUy3UpUMhwG',
-  'QmcGmhdCV9DnXWFnD4y6wgzhXUfexJLzgz8boG97HNL4tH',
-  'QmTLcPYzXiPZV6jwTF6CVUvUyLjMG4y15HRW3dA7z5rc7e',
-  // replies
-  'QmbmhVWWw2fWZ1EgeUK7Q4bMGa7ngpSGdgJmCWfSLJsthC',
-  'QmNoNxFkEgM65ATGsL38cufuuNJx5UdNawmMAudkdwjhf1',
-  'QmaaGTw5WzTFz4SMc4C4CdK7FDtaAT9yFUYekHErELXdgi',
-  'QmPfjpbDqo9kEWe5gBpL9BeYUPU5GBVp17W763zyuz8JMi',
-  'QmUTCSKiiTunWECvLRiJfxotUmNfanJyjRR8Tjq5pr1YLK',
-].map((cid, i) => withCommunity(cid, communities[i % communities.length]!))
+// Which comments each cell fetches. Never hardcoded CIDs — boards purge old threads, so a fixed
+// list goes stale (it did: every cell fetched nothing for months). The benchmark server samples
+// live posts and replies from the boards' current pages at run time, once per run, so every cell
+// of a run fetches the same comments (see /comments-sample in lib/server.ts).
+const post: CommentSampleSpec = {communities: 1, posts: 1, replies: 0}
+const reply: CommentSampleSpec = {communities: 1, posts: 0, replies: 1}
+const oneSub5Posts5Replies: CommentSampleSpec = {communities: 1, posts: 5, replies: 5}
+const tenSubs5Posts5Replies: CommentSampleSpec = {communities: 10, posts: 5, replies: 5}
 let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
   {
     name: 'ipfsgateway.xyz (1 post)',
@@ -322,7 +298,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: [post]
+    sample: post
   },
   {
     name: 'ipfsgateway.xyz (1 reply)',
@@ -336,7 +312,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: [reply]
+    sample: reply
   },
   {
     name: 'ipfsgateway.xyz (1 sub, 5 posts, 5 replies)',
@@ -350,7 +326,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: oneSub5Posts5Replies
+    sample: oneSub5Posts5Replies
   },
   {
     name: 'ipfsgateway.xyz (10 subs, 5 posts, 5 replies)',
@@ -364,7 +340,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: tenSubs5Posts5Replies
+    sample: tenSubs5Posts5Replies
   },
   {
     name: 'libp2p js client (1 post)',
@@ -384,7 +360,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: [post]
+    sample: post
   },
   {
     name: 'libp2p js client (1 reply)',
@@ -404,7 +380,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: [reply]
+    sample: reply
   },
   {
     name: 'libp2p js client (1 sub, 5 posts, 5 replies)',
@@ -424,7 +400,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: oneSub5Posts5Replies
+    sample: oneSub5Posts5Replies
   },
   {
     name: 'libp2p js client (10 subs, 5 posts, 5 replies)',
@@ -444,7 +420,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
       validatePages: false,
       dataPath
     },
-    comments: tenSubs5Posts5Replies
+    sample: tenSubs5Posts5Replies
   }
 ]
 
@@ -467,7 +443,7 @@ let fetchCommentBenchmarkOptions: CommentListBenchmarkOptions[] = [
 //       validatePages: false,
 //       dataPath
 //     },
-//     comments: [reply]
+//     sample: reply
 //   }
 // ]
 
@@ -489,21 +465,8 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
     communityName: publishCommunity.name,
     communityPublicKey: publishCommunity.publicKey
   },
-  {
-    name: 'https://plebpubsub.xyz',
-    pkcOptions: {
-      pubsubKuboRpcClients: ['https://plebpubsub.xyz'],
-      chainProviders: {
-        eth: {urls: ['https://ethrpc.xyz'], chainId: 1},
-        sol: {urls: ['https://solrpc.xyz'], chainId: 1}
-      },
-      resolveAuthorAddresses: false,
-      validatePages: false,
-      dataPath
-    },
-    communityName: publishCommunity.name,
-    communityPublicKey: publishCommunity.publicKey
-  },
+  // 'https://plebpubsub.xyz' was here: the provider stopped answering (connections time out, every
+  // cell NaN since v0.0.100). Re-add it if it comes back.
   {
     name: 'libp2p js client',
     pkcOptions: {
@@ -533,11 +496,17 @@ let publishBenchmarkOptions: PublishBenchmarkOptions[] = [
 //
 // The community can't be a production 5chan board: those end the challenge exchange at an
 // interactive Spam Blocker iframe, so a headless publish never succeeds. The harness runs its own
-// no-challenge community on its own kubo node instead (lib/reply-propagation-host.ts), which also
+// no-challenge community on its own kubo node instead (lib/local-community-host.ts), which also
 // means the reader-side transport is the only thing that varies here — and it is the whole point
 // of the matrix: kubo, helia (libp2p-js) and ipfs-gateway clients learn about a new reply in
 // completely different ways. The node/chrome runtime axis is applied on top by start.ts.
+// Local cells take 10 samples: the loopback mesh is cheap (the slowest reader, ipfs-gateway, is
+// ~11s a sample) and three samples made a median that moved with every outlier. The remote cells
+// stay at 3: each sample there publishes to someone else's community over production infra.
 const replyPropagationSamples = process.env.REPLY_PROPAGATION_SAMPLES
+  ? Number(process.env.REPLY_PROPAGATION_SAMPLES)
+  : 10
+const remoteReplyPropagationSamples = process.env.REPLY_PROPAGATION_SAMPLES
   ? Number(process.env.REPLY_PROPAGATION_SAMPLES)
   : 3
 const replyPropagationBasePkcOptions = {
@@ -591,11 +560,16 @@ const replyPropagationBenchmarkOptions: ReplyPropagationBenchmarkOptions[] = [
 // They publish real posts and replies to the target community on each run, and a sample whose
 // community is unreachable records its error and moves on rather than failing the run.
 //
-// The community's `question` challenge answer is published by its owner in the community's own
-// settings, so the benchmark answers the challenge rather than needing a moderator role.
+// The community's `question` challenge answer is only in its owner's community.settings, and the
+// owner rotates it, so it is not in this file: CI passes it in REMOTE_COMMUNITY_CHALLENGE_ANSWER (a
+// repository secret, read by lib/local-community-host.ts). Without it these cells fail "Wrong answer."
+//
+// These cells depend on a machine and a network the harness does not control (its load, the
+// community's traffic, production gateways and pubsub providers), so they are release-time
+// monitoring of what a real client sees, not a version-to-version comparison — they are never
+// backfilled; use the local cells above for that.
 const remoteCommunity = {
   publicKey: '12D3KooWG3XbzoVyAE6Y9vHZKF64Yuuu4TjdgQKedk14iYmTEPWu',
-  challengeAnswers: ['398a418e-0af6-43f5-ad4c-894b189f6361'],
 }
 const productionHttpRouters = [
   'https://routing.lol',
@@ -611,7 +585,8 @@ const productionGateways = [
 // the publishing client is an ordinary production client: a pubsub provider to publish through,
 // gateways to read the community record
 const remotePublisherPkcOptions = {
-  pubsubKuboRpcClients: ['https://pubsubprovider.xyz', 'https://plebpubsub.xyz'],
+  // plebpubsub.xyz dropped: it stopped answering (see publishBenchmarkOptions)
+  pubsubKuboRpcClients: ['https://pubsubprovider.xyz'],
   ipfsGatewayUrls: productionGateways,
   httpRoutersOptions: [] as string[],
   resolveAuthorAddresses: false,
@@ -634,11 +609,12 @@ replyPropagationBenchmarkOptions.push(
     },
     community: remoteCommunity,
     publisherPkcOptions: remotePublisherPkcOptions,
+    environmentDependent: true,
     // a remote community over production infra needs more room than the loopback network:
     // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
     sampleTimeoutSeconds: 300,
     readerKuboNode: true,
-    samples: replyPropagationSamples,
+    samples: remoteReplyPropagationSamples,
   },
   {
     name: 'remote community, reader: libp2p js client',
@@ -652,10 +628,11 @@ replyPropagationBenchmarkOptions.push(
     },
     community: remoteCommunity,
     publisherPkcOptions: remotePublisherPkcOptions,
+    environmentDependent: true,
     // a remote community over production infra needs more room than the loopback network:
     // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
     sampleTimeoutSeconds: 300,
-    samples: replyPropagationSamples,
+    samples: remoteReplyPropagationSamples,
   },
   {
     name: 'remote community, reader: ipfs gateway',
@@ -668,10 +645,11 @@ replyPropagationBenchmarkOptions.push(
     },
     community: remoteCommunity,
     publisherPkcOptions: remotePublisherPkcOptions,
+    environmentDependent: true,
     // a remote community over production infra needs more room than the loopback network:
     // gateways cache IPNS records, and a fresh kubo node has to find the pubsub topic first
     sampleTimeoutSeconds: 300,
-    samples: replyPropagationSamples,
+    samples: remoteReplyPropagationSamples,
   },
 )
 
@@ -711,7 +689,164 @@ const loadCommunitiesBenchmarkOptions: LoadCommunitiesBenchmarkOptions[] = loadC
   })
 )
 
+// ---------------------------------------------------------------------------------------------
+// Local-community benchmarks. Everything below runs against communities the harness itself hosts
+// on a private kubo mesh (lib/local-community-host.ts in the benchmark server, or a script
+// benchmark's own mesh), so unlike the production cells above none of it decays as boards, CIDs and
+// providers change — which is also what makes it the part whose history can be backfilled honestly.
+// ---------------------------------------------------------------------------------------------
+
+// The reader transports of the local reply-propagation cells, reused by comment-update-propagation
+const localReaderTransports: {name: string; pkcOptions: Record<string, unknown>}[] = [
+  {
+    name: 'reader: kubo rpc',
+    pkcOptions: {
+      kuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.reader)],
+      pubsubKuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.reader)],
+    },
+  },
+  {
+    name: 'reader: libp2p js client',
+    pkcOptions: {libp2pJsClientsOptions: [{key: 'libp2pjs'}], httpRoutersOptions: [kuboHttpRouterUrl(localKuboNodes.community)]},
+  },
+  {name: 'reader: ipfs gateway', pkcOptions: {ipfsGatewayUrls: [kuboGatewayUrl(localKuboNodes.reader)]}},
+]
+
+// comment-update-propagation: vote -> upvoteCount visible, author edit -> edited content visible
+const commentUpdatePropagationBenchmarkOptions: CommentUpdatePropagationBenchmarkOptions[] = localReaderTransports.map((transport) => {
+  // the gateway reader only sees a change on its next poll (60s by default), twice per sample, and
+  // that polling is the same in a browser — so 2 samples, node only
+  const isGateway = transport.name === 'reader: ipfs gateway'
+  return {
+    name: transport.name,
+    pkcOptions: {
+      ...replyPropagationBasePkcOptions,
+      ...transport.pkcOptions,
+      dataPath: '.pkc-benchmark-comment-update-propagation',
+    } as CommentUpdatePropagationBenchmarkOptions['pkcOptions'],
+    samples: process.env.COMMENT_UPDATE_SAMPLES ? Number(process.env.COMMENT_UPDATE_SAMPLES) : isGateway ? 2 : 3,
+    ...(isGateway ? {runtimes: ['node' as const]} : {}),
+  }
+})
+
+// local-publish: the community side of publishing. Matrix: publisher transport x challenge x burst
+// size; plus one cell where a whole burst comes from a single author (pkc-js v0.0.111 serializes an
+// author's concurrent publications so they share one pseudonymity alias).
+const localPublishTransports: {name: string; pkcOptions: Record<string, unknown>}[] = [
+  {
+    name: 'kubo rpc',
+    pkcOptions: {
+      kuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.publisher)],
+      pubsubKuboRpcClientsOptions: [kuboRpcUrl(localKuboNodes.publisher)],
+    },
+  },
+  {
+    name: 'libp2p js client',
+    pkcOptions: {libp2pJsClientsOptions: [{key: 'libp2pjs'}], httpRoutersOptions: [kuboHttpRouterUrl(localKuboNodes.community)]},
+  },
+]
+const localPublishDimensions = {
+  challenge: ['none', 'question'] as const,
+  // [publications per round, rounds]
+  burst: [
+    [1, 10],
+    [10, 3],
+    [50, 2],
+  ] as const,
+}
+const localPublishBenchmarkOptions: LocalPublishBenchmarkOptions[] = []
+for (const transport of localPublishTransports) {
+  for (const challenge of localPublishDimensions.challenge) {
+    for (const [burst, rounds] of localPublishDimensions.burst) {
+      localPublishBenchmarkOptions.push({
+        name: `publisher: ${transport.name}, challenge: ${challenge}, burst: ${burst}`,
+        pkcOptions: {...replyPropagationBasePkcOptions, ...transport.pkcOptions, dataPath: '.pkc-benchmark-local-publish'},
+        challenge,
+        burst,
+        rounds,
+        // a kubo-rpc publication holds a streaming pubsub subscription open over HTTP/1.1, and
+        // chromium allows 6 connections per host: a burst deadlocks on the browser's connection
+        // pool (every publication times out), which says nothing about pkc-js
+        ...(transport.name === 'kubo rpc' && burst > 1 ? {runtimes: ['node' as const]} : {}),
+        // profiled: a single publication through each transport, and the community under a burst
+        ...(challenge === 'question' && (burst === 1 || (burst === 10 && transport.name === 'libp2p js client')) ? {profile: true} : {}),
+      })
+    }
+  }
+}
+localPublishBenchmarkOptions.push({
+  name: 'publisher: kubo rpc, challenge: none, burst: 50, same author',
+  pkcOptions: {...replyPropagationBasePkcOptions, ...localPublishTransports[0]!.pkcOptions, dataPath: '.pkc-benchmark-local-publish'},
+  challenge: 'none',
+  burst: 50,
+  rounds: 2,
+  sameAuthor: true,
+  runtimes: ['node'], // see the kubo rpc bursts above
+})
+
+// seeded-board fixtures (lib/board-fixture.ts): built once by the oldest pkc-js in the backfill
+// window and migrated forward by every version under test. S and M are the shapes pkc-js PR #346
+// measured (300 posts / ~16k comments, 2k posts / ~113k comments; 25 posts per author).
+const boardFixtures: Record<string, BoardFixtureSpec> = {
+  S: {posts: 300, minReplies: 40, maxReplies: 66, postsPerAuthor: 25},
+  M: {posts: 2000, minReplies: 40, maxReplies: 66, postsPerAuthor: 25},
+}
+// settings.pages (configurable page sorts) shipped in pkc-js v0.0.108 (PR #346)
+const pageSortsMinVersion = '0.0.108'
+const seededBoardBenchmarkOptions: SeededBoardBenchmarkOptions[] = [
+  {name: 'board S, default sorts', pkcOptions: {}, fixture: 'S', steadySamples: 3, cellTimeoutMinutes: 20, profile: true},
+  {
+    name: 'board S, posts: active only',
+    pkcOptions: {},
+    fixture: 'S',
+    pages: {posts: [{name: 'active', preloaded: true}]},
+    steadySamples: 3,
+    cellTimeoutMinutes: 20,
+    minPkcJsVersion: pageSortsMinVersion,
+  },
+  {
+    name: 'board S, posts: hot only, replies: best only',
+    pkcOptions: {},
+    fixture: 'S',
+    pages: {posts: [{name: 'hot', preloaded: true}], replies: [{name: 'best', preloaded: true}]},
+    steadySamples: 3,
+    cellTimeoutMinutes: 20,
+    minPkcJsVersion: pageSortsMinVersion,
+  },
+]
+// The M board takes 8-12 minutes a version, and versions before v0.0.108 are expected to time out
+// or crash on it — a weekly/opt-in job, not the release path (see benchmark-soak.yml).
+if (process.env.BENCHMARK_LARGE_BOARDS === '1') {
+  seededBoardBenchmarkOptions.push({name: 'board M, default sorts', pkcOptions: {}, fixture: 'M', steadySamples: 3, cellTimeoutMinutes: 45})
+}
+
+const importTimeBenchmarkOptions: ImportTimeBenchmarkOptions[] = [
+  {name: '@pkcprotocol/pkc-js', pkcOptions: {}, samples: 10},
+]
+
+const rpcCommunityListBenchmarkOptions: RpcCommunityListBenchmarkOptions[] = [
+  {name: '10 communities, 20 posts each', pkcOptions: {}, communities: 10, postsPerCommunity: 20, profile: true},
+]
+
+// only run when asked for by name (start.ts --benchmark soak), see benchmark-soak.yml
+const soakBenchmarkOptions: SoakBenchmarkOptions[] = [
+  {
+    name: `${process.env.SOAK_MINUTES ?? 30} minutes, 30 publications/minute`,
+    pkcOptions: {},
+    minutes: Number(process.env.SOAK_MINUTES ?? 30),
+    publicationsPerMinute: 30,
+    profile: true,
+  },
+]
+
 const benchmarkOptions: BenchmarkOptionsFile = {
+  localPublishBenchmarkOptions,
+  commentUpdatePropagationBenchmarkOptions,
+  seededBoardBenchmarkOptions,
+  importTimeBenchmarkOptions,
+  rpcCommunityListBenchmarkOptions,
+  soakBenchmarkOptions,
+  boardFixtures,
   resolveAddressesBenchmarkOptions,
   replyPropagationBenchmarkOptions,
   fetchIpnsBenchmarkOptions,

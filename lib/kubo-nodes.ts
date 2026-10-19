@@ -19,6 +19,8 @@ export interface KuboNode {
   gatewayUrl: string
   // dialable by the other nodes AND by a libp2p-js/helia client (kubo listens on /ws)
   swarmMultiaddr: string
+  // the daemon's pid, for sampling its RSS (lib/process-metrics.ts)
+  pid?: number
   stop: () => Promise<void>
   // synchronous, for process-exit handlers where there is no time to await anything
   kill: () => void
@@ -209,6 +211,7 @@ export const startKuboNode = async ({
     rpcUrl,
     gatewayUrl: kuboGatewayUrl(config),
     swarmMultiaddr: `/ip4/127.0.0.1/tcp/${config.swarmPort}/ws/p2p/${peerId}`,
+    pid: daemon.pid,
     stop,
     kill: () => daemon.kill('SIGKILL'),
   }
@@ -218,6 +221,29 @@ export const startKuboNode = async ({
 export const connectKuboNodes = async (from: KuboNode, to: KuboNode): Promise<void> => {
   await kuboRpc(from.rpcUrl, `swarm/connect?arg=${encodeURIComponent(to.swarmMultiaddr)}`)
   console.log(`kubo '${from.config.name}' connected to '${to.config.name}'`)
+}
+
+// bytes the node's repo currently holds (blocks + datastore)
+export const kuboRepoSizeBytes = async (node: KuboNode): Promise<number | null> => {
+  try {
+    const stat = await kuboRpc(node.rpcUrl, 'repo/stat?size-only=true', 60_000)
+    return typeof stat?.RepoSize === 'number' ? stat.RepoSize : null
+  } catch (e) {
+    return null
+  }
+}
+
+// `ipfs repo gc`; the response is a stream of removed keys, which we only wait out
+export const kuboRepoGc = async (node: KuboNode, timeoutMs = 600_000): Promise<void> => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(`${node.rpcUrl}/repo/gc?quiet=true`, {method: 'POST', signal: controller.signal})
+    await res.text()
+    if (!res.ok) throw Error(`kubo rpc repo/gc failed: HTTP ${res.status}`)
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 export const kuboPeerCount = async (node: KuboNode): Promise<number> => {

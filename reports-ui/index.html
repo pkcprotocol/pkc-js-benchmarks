@@ -43,7 +43,7 @@
     .content {
       overflow: hidden;
       transition: max-height 0.35s ease, opacity 0.35s ease;
-      max-height: 10000px;
+      max-height: 1000000px;
       opacity: 1;
     }
     .content.collapsed {
@@ -64,6 +64,17 @@
     .chart-container canvas {
       width: 100% !important;
       height: 100% !important;
+    }
+    .env-badge {
+      font-size: 0.6em;
+      font-weight: 500;
+      color: #121212;
+      background-color: #ffb74d;
+      border-radius: 6px;
+      padding: 2px 8px;
+      margin-left: 8px;
+      vertical-align: middle;
+      cursor: help;
     }
     .type-subtitle {
       font-size: 0.9em;
@@ -105,7 +116,8 @@
 
     async function run() {
       const [res, commitToVersion] = await Promise.all([
-        fetch('https://raw.githubusercontent.com/pkcprotocol/pkc-js-benchmarks/refs/heads/master/reports/all.json'),
+        // ?report=<url> charts another all.json (e.g. a local one while working on the harness)
+        fetch(new URLSearchParams(location.search).get('report') || 'https://raw.githubusercontent.com/pkcprotocol/pkc-js-benchmarks/refs/heads/master/reports/all.json'),
         fetchCommitToVersion(),
       ]);
       const data = (await res.json()).flat();
@@ -126,6 +138,26 @@
 
       const chartsDiv = document.getElementById('charts');
       const formatType = str => str.replace('BenchmarkOptions', '').replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+      // which numeric keys are charted, and on which axis: by unit suffix
+      const unitOf = key =>
+        /TimeSeconds$/.test(key) ? 'Seconds'
+        : /PerSecond$/.test(key) ? 'PerSecond'
+        : /MB$/.test(key) ? 'MB'
+        : /Ms$/.test(key) ? 'Ms'
+        : /Bytes$/.test(key) ? 'Bytes'
+        : /Percent$/.test(key) ? 'Percent'
+        : /Count$/.test(key) ? 'Count'
+        : null;
+      const unitOrder = ['Seconds', 'PerSecond', 'Ms', 'MB', 'Bytes', 'Percent', 'Count'];
+      const unitLabels = {Seconds: 'Seconds', PerSecond: 'Per second', Ms: 'Milliseconds', MB: 'MB', Bytes: 'Bytes', Percent: '%', Count: 'Count'};
+      // metadata, not measurements (anchor holds ratios keyed by metric name)
+      const skippedKeys = new Set(['environmentDependent', 'timestamp', 'environment', 'anchor', 'topFunctions', 'pkcJsCommitHash', 'measuredAt']);
+      const prefixedKeys = new Set(['process', 'communityProcess', 'aggregate', 'cpuProfile', 'communityCpuProfile']);
+      const compareVersions = (a, b) => {
+        const pa = a.split('-')[0].split('.').map(Number), pb = b.split('-')[0].split('.').map(Number);
+        for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+        return 0;
+      };
       const prettifyLabel = label => {
         let cleaned = label.replace(/TimeSeconds$/i, '');
         cleaned = cleaned.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -167,143 +199,152 @@
           for (const runtime of runtimesSorted) {
             const benchmarks = runtimesObj[runtime];
 
-            // Prepare metrics
-            const metricTimeGroups = {};
+            // metric -> commit -> values, per unit. A metric's unit is its key suffix; a key like
+            // selfMsByPackage gives its children (package names) its unit. Keys under process,
+            // communityProcess, aggregate, cpuProfile, ... are prefixed with that parent so the
+            // benchmark process and the community process don't merge into one series.
+            const metricsByUnit = {};
+            const environmentDependent = benchmarks.some(e => e.environmentDependent);
             const commitTimestampMap = {};
 
             for (const entry of benchmarks) {
               let ts = entry.timestamp;
               if (!ts) continue;
               const hash = entry.pkcJsCommitHash || 'unknown';
-              commitTimestampMap[hash] = ts;
+              commitTimestampMap[hash] = Math.min(commitTimestampMap[hash] ?? Infinity, ts);
 
-              function extractTimings(obj) {
+              const add = (unit, metric, val) => {
+                if (!metricsByUnit[unit]) metricsByUnit[unit] = {};
+                if (!metricsByUnit[unit][metric]) metricsByUnit[unit][metric] = {};
+                if (!metricsByUnit[unit][metric][hash]) metricsByUnit[unit][metric][hash] = [];
+                metricsByUnit[unit][metric][hash].push(val);
+              };
+              function extractMetrics(obj, prefix) {
                 if (!obj || typeof obj !== 'object') return;
                 for (const [key, val] of Object.entries(obj)) {
-                  if (typeof val === 'number' && key.endsWith('TimeSeconds')) {
-                    if (!type.toLowerCase().includes('publish') || key.toLowerCase().includes('challenge')) {
-                      if (!metricTimeGroups[key]) metricTimeGroups[key] = {};
-                      if (!metricTimeGroups[key][hash]) metricTimeGroups[key][hash] = [];
-                      metricTimeGroups[key][hash].push(val);
+                  if (skippedKeys.has(key)) continue;
+                  if (typeof val === 'number') {
+                    const unit = unitOf(key);
+                    if (!unit) continue;
+                    if (unit === 'Seconds' && type.toLowerCase().includes('publish') && !type.startsWith('localPublish') && !key.toLowerCase().includes('challenge')) continue;
+                    add(unit, prefix ? `${prefix} ${key}` : key, val);
+                  } else if (val && typeof val === 'object') {
+                    const byUnit = key.match(/(TimeSeconds|MB|Ms|Bytes|Count|Percent|PerSecond)By[A-Z]\w*$/);
+                    if (byUnit) {
+                      for (const [child, childVal] of Object.entries(val)) {
+                        if (typeof childVal === 'number') add(unitOf(byUnit[1]), `${key.replace(byUnit[0], '')} ${child}`, childVal);
+                      }
+                    } else {
+                      extractMetrics(val, prefixedKeys.has(key) ? key : prefix);
                     }
-                  } else if (typeof val === 'object') {
-                    extractTimings(val);
                   }
                 }
               }
-              extractTimings(entry);
+              extractMetrics(entry, '');
             }
 
-            const commitsSorted = Object.entries(commitTimestampMap)
-              .sort((a, b) => a[1] - b[1])
-              .map(e => e[0]);
+            // order by pkc-js version (a backfilled entry is measured long after its release, so its
+            // timestamp says nothing about where it belongs); unpublished commits by timestamp
+            const commitsSorted = Object.keys(commitTimestampMap).sort((a, b) => {
+              const va = commitToVersion[a], vb = commitToVersion[b];
+              if (va && vb) return compareVersions(va, vb);
+              return commitTimestampMap[a] - commitTimestampMap[b];
+            });
 
             if (commitsSorted.length === 0) continue;
 
             const median = arr => arr.length ? arr.slice().sort((a,b) => a-b)[Math.floor(arr.length/2)] : null;
             const average = arr => arr.length ? arr.reduce((a,b) => a+b, 0)/arr.length : null;
 
-            const datasets = [];
-            let colorIndex = 0;
+            for (const unit of unitOrder) {
+              const metricGroups = metricsByUnit[unit];
+              if (!metricGroups) continue;
+              // seconds stack (they are phases of one load); everything else side by side
+              const stacked = unit === 'Seconds';
+              const datasets = [];
+              let colorIndex = 0;
 
-            for (const [metric, commitGroups] of Object.entries(metricTimeGroups)) {
-              const medData = [];
-              const avgData = [];
-              for (const commit of commitsSorted) {
-                const vals = commitGroups[commit] || [];
-                medData.push(vals.length ? +median(vals).toFixed(4) : null);
-                avgData.push(vals.length ? +average(vals).toFixed(4) : null);
+              for (const [metric, commitGroups] of Object.entries(metricGroups)) {
+                const medData = [];
+                const avgData = [];
+                for (const commit of commitsSorted) {
+                  const vals = commitGroups[commit] || [];
+                  medData.push(vals.length ? +median(vals).toFixed(4) : null);
+                  avgData.push(vals.length ? +average(vals).toFixed(4) : null);
+                }
+                const baseColor = palette[colorIndex % palette.length];
+                const common = {borderWidth: 0, borderRadius: 3, barPercentage: 1, categoryPercentage: 1};
+                datasets.push({label: prettifyLabel(metric) + ' (Median)', data: medData, backgroundColor: baseColor, ...(stacked ? {stack: 'combined'} : {}), ...common});
+                if (stacked) datasets.push({label: prettifyLabel(metric) + ' (Average)', data: avgData, backgroundColor: baseColor + '88', stack: 'combined', ...common});
+                colorIndex++;
               }
 
-              const baseColor = palette[colorIndex % palette.length];
-              datasets.push({
-                label: prettifyLabel(metric) + ' (Median)',
-                data: medData,
-                backgroundColor: baseColor,
-                stack: 'combined',
-                borderWidth: 0,
-                borderRadius: 3,
-                barPercentage: 1,
-                categoryPercentage: 1
-              });
-              datasets.push({
-                label: prettifyLabel(metric) + ' (Average)',
-                data: avgData,
-                backgroundColor: baseColor + '88',
-                stack: 'combined',
-                borderWidth: 0,
-                borderRadius: 3,
-                barPercentage: 1,
-                categoryPercentage: 1
-              });
-              colorIndex++;
-            }
+              if (datasets.length === 0) continue;
 
-            if (datasets.length === 0) continue;
+              const container = document.createElement('div');
+              container.className = 'chart-container';
+              container.innerHTML = `
+                <h3>${name}${unit === 'Seconds' ? '' : ` — ${unitLabels[unit]}`}${environmentDependent ? ' <span class="env-badge" title="Measures infrastructure this harness does not control (someone else\'s node, production boards, gateways, pubsub providers): it moves with their load and health, not only with pkc-js. Monitoring, not a version comparison.">environment-dependent</span>' : ''}</h3>
+                <div class="type-subtitle">${formatType(type)} — Runtime: ${runtime}</div>
+                <canvas></canvas>`;
+              contentDiv.appendChild(container);
 
-            const container = document.createElement('div');
-            container.className = 'chart-container';
-            container.innerHTML = `
-              <h3>${name}</h3>
-              <div class="type-subtitle">${formatType(type)} — Runtime: ${runtime}</div>
-              <canvas></canvas>`;
-            contentDiv.appendChild(container);
+              const ctx = container.querySelector('canvas').getContext('2d');
 
-            const ctx = container.querySelector('canvas').getContext('2d');
-
-            new Chart(ctx, {
-              type: 'bar',
-              data: {
-                labels: commitsSorted.map(commitLabel), // pkc-js version, or short commit hash if unpublished
-                datasets: datasets
-              },
-              options: {
-                responsive: true,
-                interaction: { mode: 'nearest', intersect: false },
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: { color: '#ddd' }
-                  },
-                  tooltip: {
-                    callbacks: {
-                      title(ctx) {
-                        if (ctx.length > 0) {
-                          const idx = ctx[0].dataIndex;
-                          const fullHash = commitsSorted[idx];
-                          const version = commitToVersion[fullHash];
-                          const ts = commitTimestampMap[fullHash];
-                          const dateStr = new Date(ts).toLocaleString();
-                          const versionLine = version ? `Version: v${version}\n` : '';
-                          return `${versionLine}Commit: ${fullHash}\nDate: ${dateStr}`;
+              new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: commitsSorted.map(commitLabel), // pkc-js version, or short commit hash if unpublished
+                  datasets: datasets
+                },
+                options: {
+                  responsive: true,
+                  interaction: { mode: 'nearest', intersect: false },
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: { color: '#ddd' }
+                    },
+                    tooltip: {
+                      callbacks: {
+                        title(ctx) {
+                          if (ctx.length > 0) {
+                            const idx = ctx[0].dataIndex;
+                            const fullHash = commitsSorted[idx];
+                            const version = commitToVersion[fullHash];
+                            const ts = commitTimestampMap[fullHash];
+                            const dateStr = new Date(ts).toLocaleString();
+                            const versionLine = version ? `Version: v${version}\n` : '';
+                            return `${versionLine}Commit: ${fullHash}\nMeasured: ${dateStr}`;
+                          }
+                          return '';
+                        },
+                        label(ctx) {
+                          return `${ctx.dataset.label}: ${ctx.parsed.y}`;
                         }
-                        return '';
-                      },
-                      label(ctx) {
-                        return `${ctx.dataset.label}: ${ctx.parsed.y}`;
                       }
                     }
-                  }
-                },
-                scales: {
-                  x: {
-                    title: { display: true, text: 'pkc-js version', color: '#ddd' },
-                    ticks: { color: '#bbb', maxRotation: 90, minRotation: 45, autoSkip: false },
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    stacked: true,
-                    barPercentage: 1,
-                    categoryPercentage: 1,
                   },
-                  y: {
-                    title: { display: true, text: 'Seconds', color: '#ddd' },
-                    beginAtZero: true,
-                    ticks: { color: '#bbb' },
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    stacked: true
+                  scales: {
+                    x: {
+                      title: { display: true, text: 'pkc-js version', color: '#ddd' },
+                      ticks: { color: '#bbb', maxRotation: 90, minRotation: 45, autoSkip: false },
+                      grid: { color: 'rgba(255,255,255,0.1)' },
+                      stacked,
+                      barPercentage: 1,
+                      categoryPercentage: 1,
+                    },
+                    y: {
+                      title: { display: true, text: unitLabels[unit], color: '#ddd' },
+                      beginAtZero: true,
+                      ticks: { color: '#bbb' },
+                      grid: { color: 'rgba(255,255,255,0.1)' },
+                      stacked
+                    }
                   }
                 }
-              }
-            });
+              });
+            }
           }
         }
       }

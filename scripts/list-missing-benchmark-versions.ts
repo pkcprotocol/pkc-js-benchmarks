@@ -8,6 +8,11 @@
 //   FORCE_LATEST=1         also include dist-tags.latest even if already benchmarked
 //                          (used on harness changes, to re-benchmark current latest)
 //   INCLUDE_VERSION=x.y.z  also include this specific version even if already benchmarked
+//   MISSING_BENCHMARKS="a b" backfill mode: instead of versions with no report, list the LAST
+//                          (default 20) most recently published versions whose report has no entry
+//                          of these benchmarks (start.ts --benchmark names, see
+//                          lib/benchmark-registry.ts). Used by benchmark-backfill.yml.
+//   LAST=20                how many recent versions backfill mode considers
 //   MIN_VERSION=x.y.z      ignore versions older than this (default below). We do NOT
 //                          backfill pre-history: old releases are incompatible with the
 //                          current harness and each hanging test burns vitest's 10-min
@@ -16,22 +21,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {compareSemver} from '../lib/semver.ts'
+import {benchmarkByName} from '../lib/benchmark-registry.ts'
 
 // Floor for benchmarking. Bump this if you ever want to re-include older releases.
 const DEFAULT_MIN_VERSION = '0.0.60'
-
-// Compare dotted numeric versions (e.g. 0.0.60 vs 0.0.9). Pre-release/build suffixes
-// are ignored — only the x.y.z core is compared. Returns -1 / 0 / 1.
-const compareSemver = (a: string, b: string): number => {
-  const core = (v: string) => v.split('+')[0].split('-')[0].split('.').map((n) => parseInt(n, 10) || 0)
-  const pa = core(a)
-  const pb = core(b)
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const d = (pa[i] || 0) - (pb[i] || 0)
-    if (d !== 0) return d < 0 ? -1 : 1
-  }
-  return 0
-}
 
 const rootPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const reportsDir = path.join(rootPath, 'reports')
@@ -66,4 +60,28 @@ for (const [version, meta] of Object.entries(versions)) {
 }
 
 rows.sort((a, b) => a.t.localeCompare(b.t)) // oldest first
-for (const r of rows) console.log(`${r.version} ${r.gitHead}`)
+
+const missingBenchmarks = (process.env.MISSING_BENCHMARKS || '').split(/[\s,]+/).filter(Boolean)
+if (missingBenchmarks.length) {
+  const types = missingBenchmarks.map((name) => {
+    const benchmark = benchmarkByName(name)
+    if (!benchmark) throw Error(`unknown benchmark '${name}'`)
+    return benchmark.optionsType
+  })
+  const last = Number(process.env.LAST || 20)
+  const recent = Object.entries(versions)
+    .filter(([version, meta]) => meta?.gitHead && compareSemver(version, minVersion) >= 0)
+    .map(([version, meta]) => ({version, gitHead: meta.gitHead!, t: time[version] || ''}))
+    .sort((a, b) => a.t.localeCompare(b.t))
+    .slice(-last)
+  for (const r of recent) {
+    const reportFile = path.join(reportsDir, `${r.gitHead}.json`)
+    // a version with no report at all gets a full run from benchmark-releases.yml, not a partial one
+    if (!fs.existsSync(reportFile)) continue
+    const entries = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {type?: string}[]
+    const forced = r.version === includeVersion
+    if (forced || types.some((type) => !entries.some((entry) => entry.type === type))) console.log(`${r.version} ${r.gitHead}`)
+  }
+} else {
+  for (const r of rows) console.log(`${r.version} ${r.gitHead}`)
+}
