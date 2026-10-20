@@ -674,21 +674,30 @@
 └─────────────────────┴──────────┴───────────────────────────┴────────┴─────────┴─────────┘
   @pkcprotocol/pkc-js (node) process: rss 80.88MB, heap after gc 12.07MB, cpu 356ms, event loop p99 12.48ms max 15.54ms, gc 6.3ms
   @pkcprotocol/pkc-js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 3.7ms max 3.7ms, gc -ms, long tasks 0ms
-┌──────────────────────────────────────────────┬─────────┬───────────────┬─────────────────────────────────────────────────────┬─────────┬─────────┐
-│ (index)                                      │ runtime │ benchmark     │ median                                              │ average │ success │
-├──────────────────────────────────────────────┼─────────┼───────────────┼─────────────────────────────────────────────────────┼─────────┼─────────┤
-│ SEEDED BOARD                                 │         │               │                                                     │         │         │
-│                                              │         │               │                                                     │         │         │
-│                                              │         │               │                                                     │         │         │
-│ board S, default sorts                       │         │               │                                                     │         │         │
-│                                              │ 'node'  │ 'error'       │ 'cell timed out after 20 minutes'                   │ ''      │ ''      │
-│ board S, default sorts (cpu profiled)        │         │               │                                                     │         │         │
-│                                              │ 'node'  │ 'error'       │ 'cell timed out after 20 minutes'                   │ ''      │ ''      │
-│ board S, posts: active only                  │         │               │                                                     │         │         │
-│                                              │ 'node'  │ 'unsupported' │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
-│ board S, posts: hot only, replies: best only │         │               │                                                     │         │         │
-│                                              │ 'node'  │ 'unsupported' │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
-└──────────────────────────────────────────────┴─────────┴───────────────┴─────────────────────────────────────────────────────┴─────────┴─────────┘
+┌──────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────────────────────────────────────────────────┬─────────┬─────────┐
+│ (index)                                      │ runtime │ benchmark                   │ median                                              │ average │ success │
+├──────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────────────────────────────────────────────────┼─────────┼─────────┤
+│ SEEDED BOARD                                 │         │                             │                                                     │         │         │
+│                                              │         │                             │                                                     │         │         │
+│                                              │         │                             │                                                     │         │         │
+│ board S, default sorts (cpu profiled)        │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'error'                     │ 'cell timed out after 20 minutes'                   │ ''      │ ''      │
+│ board S, default sorts                       │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.102                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 137.615                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 1105.518                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 6.956                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'db size (MB)'              │ 43.89                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 127.61                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'post to record (s)'        │ 6.956                                               │ 47.409  │ '3/3'   │
+│ board S, posts: active only                  │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
+│ board S, posts: hot only, replies: best only │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
+└──────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────────────────────────────────────────────────┴─────────┴─────────┘
+  board S, default sorts (node) process: rss 932.06MB, heap after gc 60.41MB, cpu 1481661ms, event loop p99 5012.19ms max 124486.94ms, gc 10905.3ms
 ┌──────────────────────────────────────────────┬─────────┬────────────────────────────────────┬────────┬─────────┬─────────┐
 │ (index)                                      │ runtime │ benchmark                          │ median │ average │ success │
 ├──────────────────────────────────────────────┼─────────┼────────────────────────────────────┼────────┼─────────┼─────────┤
