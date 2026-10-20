@@ -50,8 +50,10 @@ event-loop utilization and delay, GC pauses, open fds — in chromium: JS heap a
 local-community cells also `communityProcess` (the server process hosting the community, plus its
 kubo daemon's RSS). With `--profile`, profiled entries carry `cpuProfile`/`communityCpuProfile`: CPU
 self time per npm package (attributed through the bundler's `//#region` markers, since pkc-js ships
-its dependencies bundled) and the top functions. The full `.cpuprofile` files stay in `profiles/`;
-CI uploads them as an artifact per run, one folder per version (`v<version>-<gitHead>/`).
+its dependencies bundled) and the top functions. The full `.cpuprofile` files are committed next to
+the reports, one folder per version: `cpu-profiles/v<version>/v<version>--<benchmark>--<cell>.cpuprofile`
+(`--community` for the community host's profile), and each entry's `cpuProfile.file` is that path.
+Open one in Chrome DevTools (Performance > Load profile) or https://www.speedscope.app.
 
 Every entry is also stamped with `pkcJsVersion`, `harnessCommit`, `measuredAt` and `environment`
 (CPU model, cores, memory, kernel, node, runner).

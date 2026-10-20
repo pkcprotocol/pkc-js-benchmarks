@@ -279,6 +279,8 @@ export interface CpuProfileSummary {
   // pkc-js's own self time by source module (top 15), e.g. runtime/node/community/db-handler
   pkcJsSelfMsByModule: Record<string, number>
   topFunctions: {name: string; package: string; selfMs: number}[]
+  // the full profile: cpu-profiles/v<version>/... once collected (scripts/collect-profiles.ts),
+  // relative to profiles/ before that
   file?: string
 }
 

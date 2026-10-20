@@ -114,6 +114,5 @@ dist
 .tern-port
 .fixtures
 profiles
-profiles-by-version
 .vitest-attachments
 benchmark/__screenshots__

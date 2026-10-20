@@ -161,13 +161,6 @@ jobs:
             fi
           done
 
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cpu-profiles-backfill-${{ github.run_id }}
-          path: profiles-by-version/
-          if-no-files-found: ignore
-          retention-days: 90
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -107,13 +107,3 @@ jobs:
               break
             fi
           done
-
-      # full CPU profiles, one folder per version (v<version>-<gitHead>/); the report entries only
-      # carry the per-package summary (cpuProfile.selfMsByPackage) and the file's path in here
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cpu-profiles-releases-${{ github.run_id }}
-          path: profiles-by-version/
-          if-no-files-found: ignore
-          retention-days: 90

@@ -7,9 +7,9 @@
 #                    (scripts/merge-report.ts); otherwise the run's report becomes the whole file
 #   RUN_TIMEOUT=330m wall-time cap for the whole run (each cell also has its own cap in start.ts)
 #
-# Afterwards: reports/<gitHead>.json and .txt are updated, CPU profiles are moved to
-# profiles-by-version/v<version>-<gitHead>/ (CI uploads that as an artifact; profiles never go into
-# reports/), and reports/all.json is rebuilt. Exits non-zero when the run produced no report at all.
+# Afterwards: reports/<gitHead>.json and .txt are updated, CPU profiles are copied to
+# cpu-profiles/v<version>/ (scripts/collect-profiles.ts, which also points the report entries at
+# them; scripts/commit-reports.sh commits both), and reports/all.json is rebuilt. Exits non-zero when the run produced no report at all.
 set -uo pipefail
 VER="$1"
 SHA="$2"
@@ -28,12 +28,8 @@ if [ "${MERGE:-0}" = "1" ]; then
 else
   jq --arg sha "$SHA" 'map(. + {pkcJsCommitHash: $sha})' report.json > "reports/$SHA.json"
 fi
+[ -d profiles ] && node scripts/collect-profiles.ts "$VER" "$SHA" profiles
 node lib/print-report.ts "reports/$SHA.json" > "reports/$SHA.txt" || true
-
-if [ -d profiles ]; then
-  mkdir -p "profiles-by-version/v$VER-$SHA"
-  cp -r profiles/. "profiles-by-version/v$VER-$SHA/"
-fi
 
 rm -f reports/all.json
 jq -s -c 'sort_by(.[0].timestamp) | reverse' reports/*.json > reports/all.json

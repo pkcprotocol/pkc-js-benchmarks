@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Commit whatever changed under reports/ and push it to master, on top of whatever another
+# Commit whatever changed under reports/ and cpu-profiles/ and push it to master, on top of whatever another
 # benchmark job pushed in the meantime.
 #
 # usage: scripts/commit-reports.sh "<commit message>"
@@ -10,7 +10,7 @@
 set -u
 MSG="$1"
 for attempt in 1 2 3 4 5; do
-  git add -A reports/
+  git add -A reports/ cpu-profiles/
   git commit -q -m "$MSG" || true # nothing new on a retry: the commit is already there
   git fetch -q origin master
   # benchmark-version.sh's `npm install` rewrites package-lock.json; carry it across the rebase
