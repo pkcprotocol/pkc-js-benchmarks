@@ -687,6 +687,7 @@
 │                                              │ 'node'  │ 'create community (s)'      │ 0.102                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'start (s)'                 │ 32.276                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'start to first update (s)' │ 928.694                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 461.422                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'post to record (s)'        │ 461.421                                            │ 461.421 │ '2/2'   │

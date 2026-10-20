@@ -147,6 +147,8 @@ try {
       const seconds = (Date.now() - acceptedAt) / 1000
       cycles.push(seconds)
       board.steadyCycles[key] = {postToRecordTimeSeconds: seconds}
+      // kept current after every cycle, so a cell cut off by its cap still reports the cycles it finished
+      board.medianPostToRecordTimeSeconds = median(cycles)
       saveProgress({board})
       console.log(`steady cycle ${i + 1}: new post in a published record after ${seconds}s`)
       await post.stop().catch(() => {})
@@ -157,7 +159,6 @@ try {
       if (remainingMs() <= 1000) break
     }
   }
-  board.medianPostToRecordTimeSeconds = median(cycles)
 
   const repoAfter = await kuboRepoSizeBytes(mesh.community)
   if (repoBefore !== null && repoAfter !== null) board.ipfsRepoGrowthMB = round((repoAfter - repoBefore) / MB, 2)
