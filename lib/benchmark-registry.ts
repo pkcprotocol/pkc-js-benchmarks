@@ -91,7 +91,8 @@ export const benchmarks: BenchmarkDefinition[] = [
     optionsType: 'seededBoardBenchmarkOptions',
     runner: 'script',
     runtimes: ['node'],
-    cellTimeoutMinutes: 20,
+    // pre-v0.0.108 versions take ~17 minutes to the first record on a GitHub runner
+    cellTimeoutMinutes: 35,
     profile: true,
   },
   {

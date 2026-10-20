@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url'
 import PKC from '@pkcprotocol/pkc-js'
 import benchmarkOptionsFile from '../benchmark-options.ts'
 import {ensureBoardFixture, communityDbSizeBytes} from '../lib/board-fixture.ts'
-import {startScriptMesh, kuboPkcOptions, withDeadline, cellDeadlineMs} from '../lib/script-mesh.ts'
+import {startScriptMesh, kuboPkcOptions, withDeadline, cellDeadlineMs, saveProgress} from '../lib/script-mesh.ts'
 import {startProcessMetrics} from '../lib/process-metrics.ts'
 import {kuboRepoSizeBytes} from '../lib/kubo-nodes.ts'
 import {getBenchmarkContext, median, writeReport} from '../lib/benchmark-client.ts'
@@ -87,12 +87,14 @@ try {
   const community = await pkc.createCommunity({address: fixture.address})
   community.on('error', (e: Error) => console.log('community error:', e.message))
   board.createCommunityTimeSeconds = (Date.now() - beforeCreate) / 1000
+  saveProgress({board})
 
   if (options.pages) {
     const beforeEdit = Date.now()
     // edit() replaces settings wholesale, so the pages go in next to the board's existing settings
     await withDeadline(community.edit({settings: {...community.settings, pages: options.pages}}), remainingMs(), 'edit settings.pages')
     board.settingsEditTimeSeconds = (Date.now() - beforeEdit) / 1000
+    saveProgress({board})
   }
 
   const repoBefore = await kuboRepoSizeBytes(mesh.community)
@@ -100,9 +102,11 @@ try {
   const firstUpdate = new Promise<void>((resolve) => community.once('update', () => resolve()))
   await withDeadline(community.start(), remainingMs(), 'community.start()')
   board.startTimeSeconds = (Date.now() - beforeStart) / 1000
+  saveProgress({board})
   console.log(`start() resolved in ${board.startTimeSeconds}s, waiting for the first record...`)
   await withDeadline(firstUpdate, remainingMs(), 'the first published record')
   board.startToFirstUpdateTimeSeconds = (Date.now() - beforeStart) / 1000
+  saveProgress({board})
   console.log(`first record after ${board.startToFirstUpdateTimeSeconds}s`)
 
   // steady state: one new post -> the first record whose lastPostCid is that post
@@ -143,10 +147,12 @@ try {
       const seconds = (Date.now() - acceptedAt) / 1000
       cycles.push(seconds)
       board.steadyCycles[key] = {postToRecordTimeSeconds: seconds}
+      saveProgress({board})
       console.log(`steady cycle ${i + 1}: new post in a published record after ${seconds}s`)
       await post.stop().catch(() => {})
     } catch (e) {
       board.steadyCycles[key] = {postToRecordTimeSeconds: null, error: {message: (e as Error).message}}
+      saveProgress({board})
       console.log(`steady cycle ${i + 1} failed: ${(e as Error).message}`)
       if (remainingMs() <= 1000) break
     }

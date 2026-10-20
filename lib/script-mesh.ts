@@ -66,6 +66,14 @@ export const withDeadline = <T>(promise: Promise<T>, ms: number, label: string):
     )
   })
 
+// what a script benchmark has measured so far, written synchronously after each milestone: an old
+// version can block the event loop in synchronous sqlite work for minutes, so the script's own deadline timer
+// may never fire before start.ts kills the cell, and start.ts then reports this instead
+export const saveProgress = (fields: Record<string, unknown>): void => {
+  const file = process.env.BENCHMARK_PROGRESS_FILE
+  if (file) fs.writeJsonSync(file, fields)
+}
+
 // how long a script benchmark may still run: start.ts passes the cell's wall-time cap, and a script
 // that is about to hit it reports what it has instead of being killed with nothing
 export const cellDeadlineMs = (): number => {

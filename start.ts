@@ -148,6 +148,11 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
     BENCHMARK_CELL_DEADLINE_MS: String(timeoutMs),
     ...(profiled ? {BENCHMARK_PROFILED: '1'} : {}),
   }
+  // script benchmarks save their milestones here (lib/script-mesh.ts saveProgress), so a cell killed
+  // at its cap still reports how far it got
+  const progressFile = path.join(rootPath, '.pkc-cell-progress.json')
+  fs.removeSync(progressFile)
+  if (benchmark.runner === 'script') env.BENCHMARK_PROGRESS_FILE = progressFile
   const started = Date.now()
   let result: {code: number | null; timedOut: boolean}
   let profileDir: string | undefined
@@ -172,7 +177,13 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
       ? `cell timed out after ${Math.round(timeoutMs / 60000)} minutes`
       : `cell exited (code ${result.code}) without writing a report`
     console.log(`'${reportName}' (${runtime}): ${why}`)
-    appendReport(errorEntry(why, {timeSeconds: (Date.now() - started) / 1000}))
+    let progress: Partial<BenchmarkReport> = {}
+    try {
+      progress = fs.readJsonSync(progressFile)
+    } catch (e) {
+      // the cell saved no milestone
+    }
+    appendReport(errorEntry(why, {...progress, timeSeconds: (Date.now() - started) / 1000}))
     return
   }
   // --cpu-prof writes its file as the script exits, so the summary is attached here

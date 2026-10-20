@@ -794,7 +794,7 @@ const boardFixtures: Record<string, BoardFixtureSpec> = {
 // settings.pages (configurable page sorts) shipped in pkc-js v0.0.108 (PR #346)
 const pageSortsMinVersion = '0.0.108'
 const seededBoardBenchmarkOptions: SeededBoardBenchmarkOptions[] = [
-  {name: 'board S, default sorts', pkcOptions: {}, fixture: 'S', steadySamples: 3, cellTimeoutMinutes: 20, profile: true},
+  {name: 'board S, default sorts', pkcOptions: {}, fixture: 'S', steadySamples: 3, profile: true},
   {
     name: 'board S, posts: active only',
     pkcOptions: {},
