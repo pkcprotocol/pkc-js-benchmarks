@@ -674,30 +674,6 @@
 └─────────────────────┴──────────┴───────────────────────────┴────────┴─────────┴─────────┘
   @pkcprotocol/pkc-js (node) process: rss 80.88MB, heap after gc 12.07MB, cpu 356ms, event loop p99 12.48ms max 15.54ms, gc 6.3ms
   @pkcprotocol/pkc-js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 3.7ms max 3.7ms, gc -ms, long tasks 0ms
-┌──────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────────────────────────────────────────────────┬─────────┬─────────┐
-│ (index)                                      │ runtime │ benchmark                   │ median                                              │ average │ success │
-├──────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────────────────────────────────────────────────┼─────────┼─────────┤
-│ SEEDED BOARD                                 │         │                             │                                                     │         │         │
-│                                              │         │                             │                                                     │         │         │
-│                                              │         │                             │                                                     │         │         │
-│ board S, default sorts (cpu profiled)        │         │                             │                                                     │         │         │
-│                                              │ 'node'  │ 'error'                     │ 'cell timed out after 20 minutes'                   │ ''      │ ''      │
-│ board S, default sorts                       │         │                             │                                                     │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.102                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 137.615                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 1105.518                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 6.956                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 43.89                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 127.61                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 6.956                                               │ 47.409  │ '3/3'   │
-│ board S, posts: active only                  │         │                             │                                                     │         │         │
-│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
-│ board S, posts: hot only, replies: best only │         │                             │                                                     │         │         │
-│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
-└──────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────────────────────────────────────────────────┴─────────┴─────────┘
-  board S, default sorts (node) process: rss 932.06MB, heap after gc 60.41MB, cpu 1481661ms, event loop p99 5012.19ms max 124486.94ms, gc 10905.3ms
 ┌──────────────────────────────────────────────┬─────────┬────────────────────────────────────┬────────┬─────────┬─────────┐
 │ (index)                                      │ runtime │ benchmark                          │ median │ average │ success │
 ├──────────────────────────────────────────────┼─────────┼────────────────────────────────────┼────────┼─────────┼─────────┤
@@ -725,3 +701,36 @@
 └──────────────────────────────────────────────┴─────────┴────────────────────────────────────┴────────┴─────────┴─────────┘
   10 communities, 20 posts each (node) process: rss 400.57MB, heap after gc 70.27MB, cpu 10953ms, event loop p99 108ms max 554.7ms, gc 375.6ms
   10 communities, 20 posts each (cpu profiled) (node) process: rss 293.6MB, heap after gc 65.05MB, cpu 13453ms, event loop p99 136.45ms max 483.39ms, gc 417.4ms | cpu profile (23824ms sampled): (idle) 7013ms, @pkcprotocol/pkc-js 4562ms, (node) 3078ms, better-sqlite3 1725ms, @noble/curves 1596ms, (native) 1522ms
+┌──────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────────────────────────────────────────────────┬─────────┬─────────┐
+│ (index)                                      │ runtime │ benchmark                   │ median                                              │ average │ success │
+├──────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────────────────────────────────────────────────┼─────────┼─────────┤
+│ SEEDED BOARD                                 │         │                             │                                                     │         │         │
+│                                              │         │                             │                                                     │         │         │
+│                                              │         │                             │                                                     │         │         │
+│ board S, default sorts                       │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.102                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 137.615                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 1105.518                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 6.956                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'db size (MB)'              │ 43.89                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 127.61                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'post to record (s)'        │ 6.956                                               │ 47.409  │ '3/3'   │
+│ board S, posts: active only                  │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
+│ board S, posts: hot only, replies: best only │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.101 (needs >= 0.0.108)' │ ''      │ ''      │
+│ board S, default sorts (cpu profiled)        │         │                             │                                                     │         │         │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.116                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 133.658                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 1127.107                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 7.813                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'db size (MB)'              │ 43.9                                                │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 131.5                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'post to record (s)'        │ 7.813                                               │ 51.769  │ '3/3'   │
+└──────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────────────────────────────────────────────────┴─────────┴─────────┘
+  board S, default sorts (node) process: rss 932.06MB, heap after gc 60.41MB, cpu 1481661ms, event loop p99 5012.19ms max 124486.94ms, gc 10905.3ms
+  board S, default sorts (cpu profiled) (node) process: rss 984.21MB, heap after gc 61.96MB, cpu 1558163ms, event loop p99 4697.62ms max 132405.79ms, gc 12132ms | cpu profile (1542279ms sampled): @pkcprotocol/pkc-js 1365473ms, (idle) 70707ms, better-sqlite3 25332ms, (node) 20589ms, (garbage collector) 13704ms, (native) 11404ms
