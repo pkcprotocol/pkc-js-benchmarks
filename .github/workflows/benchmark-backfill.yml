@@ -49,6 +49,11 @@ on:
         required: false
         default: true
         type: boolean
+      profiled_only:
+        description: 'Only the CPU-profiled repetitions (with explicit versions: fill in missing profiles)'
+        required: false
+        default: false
+        type: boolean
 
 # Its own group, not benchmark-releases': GitHub keeps only ONE pending run per group, so a release
 # cron queued behind it would silently cancel a pending run of this. They run on separate runners
@@ -90,6 +95,7 @@ jobs:
           ANCHOR_VERSION: ${{ github.event.inputs.anchor_version }}
           ANCHOR_EVERY: ${{ github.event.inputs.anchor_every }}
           PROFILE: ${{ github.event.inputs.profile }}
+          PROFILED_ONLY: ${{ github.event.inputs.profiled_only }}
           GH_TOKEN: ${{ github.token }}
           REMOTE_COMMUNITY_CHALLENGE_ANSWER: ${{ secrets.REMOTE_COMMUNITY_CHALLENGE_ANSWER }}
         run: |
@@ -100,6 +106,7 @@ jobs:
           for b in $BENCHMARKS; do ANCHOR_ARGS+=(--benchmark "$b"); done
           START_ARGS=("${ANCHOR_ARGS[@]}")
           [ "$PROFILE" = "true" ] && START_ARGS+=(--profile)
+          [ "$PROFILED_ONLY" = "true" ] && START_ARGS+=(--profiled-only)
 
           if [ -n "$VERSIONS" ]; then
             REGISTRY=$(curl -s https://registry.npmjs.org/@pkcprotocol%2fpkc-js)

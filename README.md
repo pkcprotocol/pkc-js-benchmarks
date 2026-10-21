@@ -15,7 +15,7 @@ npm start -- --runtime node|chrome --benchmark resolve-addresses|fetch-ipns|gate
 
 - `--benchmark` can be repeated; without it every benchmark runs except the opt-in `soak`
 - `--only <text>` runs only the cells whose name contains `<text>` (within the benchmarks that have such a cell)
-- `--profile` runs the cells marked `profile: true` once more under the CPU profiler (node only), reported as `<name> (cpu profiled)`
+- `--profile` runs the cells marked `profile: true` once more under the CPU profiler (node only), reported as `<name> (cpu profiled)`; `--profiled-only` runs just those repetitions
 - `BENCHMARK_SERVER_PORT=3100` moves the benchmark server off port 3000; `PLAYWRIGHT_CHROMIUM_PATH` points at a system chromium
 
 Every benchmark is one row of `lib/benchmark-registry.ts`. Each cell (one options entry × one runtime)

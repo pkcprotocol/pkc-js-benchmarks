@@ -19,6 +19,8 @@ interface Argv {
   benchmark?: string | string[]
   // also run every profilable cell once more under the CPU profiler (see lib/cpu-profile.ts)
   profile?: boolean
+  // only the profiled repetitions (implies --profile): re-measure profiles without the plain cells
+  profiledOnly?: boolean
   // only the cells whose options name contains one of these (e.g. --only 'board M')
   only?: string | string[]
 }
@@ -142,7 +144,7 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
   const dataPath = (options.pkcOptions as {dataPath?: string})?.dataPath
   if (dataPath && runtime === 'node') fs.removeSync(path.join(rootPath, dataPath))
 
-  const timeoutMs = (options.cellTimeoutMinutes ?? benchmark.cellTimeoutMinutes) * 60 * 1000
+  const timeoutMs = ((profiled ? benchmark.profiledCellTimeoutMinutes : undefined) ?? options.cellTimeoutMinutes ?? benchmark.cellTimeoutMinutes) * 60 * 1000
   const env: Record<string, string> = {
     BENCHMARK_OPTIONS_NAME: options.name,
     BENCHMARK_CELL_DEADLINE_MS: String(timeoutMs),
@@ -219,11 +221,13 @@ for (const benchmark of benchmarks) {
     for (const options of allOptions) {
       if (options.runtimes && !options.runtimes.includes(runtime)) continue
       if (narrowed && !matchesOnly(options.name)) continue
+      const profiledRun = benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)
+      if (argv.profiledOnly && !profiledRun) continue
       if (benchmark.usesLocalCommunityHost) hostRunning = true
-      await runCell(benchmark, options, runtime)
+      if (!argv.profiledOnly) await runCell(benchmark, options, runtime)
       // the profiled repetition is node only: in chromium the community side is what gets profiled,
       // and that already happens on the node repetition
-      if (argv.profile && benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)) {
+      if ((argv.profile || argv.profiledOnly) && benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)) {
         await runCell(benchmark, options, runtime, true)
       }
     }

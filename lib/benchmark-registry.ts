@@ -15,6 +15,8 @@ export interface BenchmarkDefinition {
   runtimes: Runtime[]
   // wall-time cap per cell; an options entry's cellTimeoutMinutes wins
   cellTimeoutMinutes: number
+  // cap for the profiled repetition, when the profiler's overhead needs more than cellTimeoutMinutes
+  profiledCellTimeoutMinutes?: number
   // the cell's community lives in this server (lib/local-community-host.ts)
   usesLocalCommunityHost?: boolean
   // its cells can be profiled (cells opt in with `profile: true` on their options)
@@ -93,6 +95,8 @@ export const benchmarks: BenchmarkDefinition[] = [
     runtimes: ['node'],
     // pre-v0.0.108 versions take ~17 minutes to the first record on a GitHub runner
     cellTimeoutMinutes: 35,
+    // a profiled pre-v0.0.108 run is slower still, and a cell killed at its cap writes no profile
+    profiledCellTimeoutMinutes: 50,
     profile: true,
   },
   {
