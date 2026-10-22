@@ -723,16 +723,16 @@
 │ board S, posts: hot only, replies: best only │         │                             │                                                     │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.104 (needs >= 0.0.108)' │ ''      │ ''      │
 │ board S, default sorts (cpu profiled)        │         │                             │                                                     │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.063                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 70.936                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 567.341                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'first post to record (s)'  │ 49.103                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 50.624                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.125                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 140.335                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 1152.425                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 132.531                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 7.204                                               │ ''      │ ''      │
 │                                              │ 'node'  │ 'db size (MB)'              │ 43.88                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 132.25                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 135                                                 │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 49.864                                              │ 49.691  │ '4/4'   │
+│                                              │ 'node'  │ 'post to record (s)'        │ 7.226                                               │ 38.513  │ '4/4'   │
 └──────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────────────────────────────────────────────────┴─────────┴─────────┘
   board S, default sorts (node) process: rss 938.77MB, heap after gc 60.96MB, cpu 1534867ms, event loop p99 4911.53ms max 132137.35ms, gc 11447.2ms
-  board S, default sorts (cpu profiled) (node) process: rss 972.81MB, heap after gc 62.41MB, cpu 745966ms, event loop p99 2743.07ms max 45835.35ms, gc 9911.5ms | cpu profile (773464ms sampled): @pkcprotocol/pkc-js 630002ms, (idle) 71159ms, better-sqlite3 19050ms, (node) 11444ms, (garbage collector) 11181ms, (native) 9160ms
+  board S, default sorts (cpu profiled) (node) process: rss 946.86MB, heap after gc 62.47MB, cpu 1713136ms, event loop p99 5200.94ms max 125627.79ms, gc 13177.1ms | cpu profile (1691020ms sampled): @pkcprotocol/pkc-js 1509439ms, (idle) 71414ms, better-sqlite3 25996ms, (node) 20909ms, (garbage collector) 14981ms, (native) 12222ms
