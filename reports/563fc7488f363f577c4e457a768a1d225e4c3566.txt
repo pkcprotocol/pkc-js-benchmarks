@@ -674,55 +674,59 @@
 └─────────────────────┴──────────┴───────────────────────────┴────────┴─────────┴─────────┘
   @pkcprotocol/pkc-js (node) process: rss 82.1MB, heap after gc 12.09MB, cpu 508ms, event loop p99 11.89ms max 16.15ms, gc 11.5ms
   @pkcprotocol/pkc-js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 1.1ms max 1.1ms, gc -ms, long tasks 0ms
-┌──────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────┬─────────┬─────────┐
-│ (index)                                      │ runtime │ benchmark                   │ median  │ average │ success │
-├──────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────┼─────────┼─────────┤
-│ SEEDED BOARD                                 │         │                             │         │         │         │
-│                                              │         │                             │         │         │         │
-│                                              │         │                             │         │         │         │
-│ board S, default sorts                       │         │                             │         │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.109   │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 152.129 │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 222.31  │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 1.525   │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 236.06  │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 1.525   │ 2.872   │ '3/3'   │
-│ board S, default sorts (cpu profiled)        │         │                             │         │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.117   │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 150.461 │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 220.837 │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 1.261   │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 235.61  │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 1.261   │ 2.806   │ '3/3'   │
-│ board S, posts: active only                  │         │                             │         │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.107   │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 146.896 │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 216.169 │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 0.883   │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 120.09  │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
-│                                              │ 'node'  │ 'settings edit (s)'         │ 0.012   │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 0.883   │ 2.168   │ '3/3'   │
-│ board S, posts: hot only, replies: best only │         │                             │         │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.102   │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 136.512 │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 205.481 │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 0.821   │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 120.08  │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
-│                                              │ 'node'  │ 'settings edit (s)'         │ 0.011   │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 0.821   │ 2.356   │ '3/3'   │
-└──────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────┴─────────┴─────────┘
+┌──────────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────┬─────────┬─────────┐
+│ (index)                                          │ runtime │ benchmark                   │ median  │ average │ success │
+├──────────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────┼─────────┼─────────┤
+│ SEEDED BOARD                                     │         │                             │         │         │         │
+│                                                  │         │                             │         │         │         │
+│                                                  │         │                             │         │         │         │
+│ board S, default sorts                           │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.109   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 152.129 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 222.31  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 1.483   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 236.06  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 5.649   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 1.525   │ 2.872   │ '3/3'   │
+│ board S, default sorts (cpu profiled)            │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.117   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 150.461 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 220.837 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 1.261   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 235.61  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 5.896   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 1.261   │ 2.806   │ '3/3'   │
+│ board S, posts: active only                      │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.107   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 146.896 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 216.169 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 0.836   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 120.09  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'settings edit (s)'         │ 0.012   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 4.833   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 0.883   │ 2.168   │ '3/3'   │
+│ board S, posts: hot only, replies: best only     │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.102   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 136.512 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 205.481 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 0.799   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.87   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 120.08  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'settings edit (s)'         │ 0.011   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 5.47    │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 0.821   │ 2.356   │ '3/3'   │
+└──────────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────┴─────────┴─────────┘
   board S, default sorts (node) process: rss 877.43MB, heap after gc 85.53MB, cpu 186726ms, event loop p99 45.65ms max 110125.65ms, gc 3854.7ms
   board S, default sorts (cpu profiled) (node) process: rss 884.1MB, heap after gc 86.82MB, cpu 193069ms, event loop p99 46.43ms max 108447.92ms, gc 3923ms | cpu profile (238056ms sampled): @pkcprotocol/pkc-js 117274ms, (idle) 72068ms, (node) 17169ms, (native) 8398ms, (garbage collector) 4368ms, zod 2908ms
   board S, posts: active only (node) process: rss 612.09MB, heap after gc 85.92MB, cpu 177798ms, event loop p99 38.34ms max 105696.46ms, gc 3194.1ms

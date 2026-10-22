@@ -690,11 +690,12 @@
 │                                              │ 'node'  │ 'create community (s)'      │ 0.104                                               │ ''      │ ''      │
 │                                              │ 'node'  │ 'start (s)'                 │ 133.783                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'start to first update (s)' │ 1129.248                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 7.339                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 7.169                                               │ ''      │ ''      │
 │                                              │ 'node'  │ 'db size (MB)'              │ 43.89                                               │ ''      │ ''      │
 │                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 130.55                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                 │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 139.713                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'post to record (s)'        │ 7.339                                               │ 51.35   │ '3/3'   │
 │ board S, posts: active only                  │         │                             │                                                     │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.104 (needs >= 0.0.108)' │ ''      │ ''      │

@@ -37,6 +37,7 @@ const board: SeededBoardMetrics = {
   createCommunityTimeSeconds: null,
   startTimeSeconds: null,
   startToFirstUpdateTimeSeconds: null,
+  firstPostToRecordTimeSeconds: null,
   medianPostToRecordTimeSeconds: null,
   dbSizeMB: null,
   ipfsRepoGrowthMB: null,
@@ -114,7 +115,9 @@ try {
   publisherPkc.on('error', (e: Error) => console.log('publisher pkc error:', e.message))
   board.steadyCycles = {}
   const cycles: number[] = []
-  for (let i = 0; i < (options.steadySamples ?? 3); i++) {
+  // one first post (reported apart: the board may still be catching up after the first record) and
+  // then `steadySamples` warm ones for the median
+  for (let i = 0; i < 1 + (options.steadySamples ?? 3); i++) {
     const key = `sample-${i + 1}`
     try {
       const post = await publisherPkc.createComment({
@@ -145,10 +148,13 @@ try {
         'a record with the new post',
       )
       const seconds = (Date.now() - acceptedAt) / 1000
-      cycles.push(seconds)
       board.steadyCycles[key] = {postToRecordTimeSeconds: seconds}
       // kept current after every cycle, so a cell cut off by its cap still reports the cycles it finished
-      board.medianPostToRecordTimeSeconds = median(cycles)
+      if (i === 0) board.firstPostToRecordTimeSeconds = seconds
+      else {
+        cycles.push(seconds)
+        board.medianPostToRecordTimeSeconds = median(cycles)
+      }
       saveProgress({board})
       console.log(`steady cycle ${i + 1}: new post in a published record after ${seconds}s`)
       await post.stop().catch(() => {})

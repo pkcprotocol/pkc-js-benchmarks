@@ -690,9 +690,9 @@
 │                                              │ 'node'  │ 'create community (s)'      │ 0.103                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'start (s)'                 │ 32.761                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'start to first update (s)' │ 892.74                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 693.326                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 693.326                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'post to record (s)'        │ 693.326                                            │ 693.326 │ '1/1'   │
 │ board S, posts: active only                  │         │                             │                                                    │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.96 (needs >= 0.0.108)' │ ''      │ ''      │

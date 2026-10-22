@@ -348,7 +348,8 @@ export interface SeededBoardBenchmarkOptions extends BaseBenchmarkOptions {
   fixture: string
   // settings.pages (pkc-js v0.0.108+); unset = the version's default sorts
   pages?: {posts?: PageSortSetting[]; replies?: PageSortSetting[]}
-  // how many "one new post -> next published record" cycles to time once the board is up
+  // how many warm "one new post -> next published record" cycles to time, after the first new post
+  // (which is reported on its own)
   steadySamples?: number
   // give up on the whole cell after this long (old versions can take very long on big boards)
   cellTimeoutMinutes?: number
@@ -365,8 +366,13 @@ export interface SeededBoardMetrics {
   startTimeSeconds?: number | null
   // community.start() until the first record is published: the first full cycle on this board
   startToFirstUpdateTimeSeconds?: number | null
-  // per steady sample: new post accepted -> a published record whose lastPostCid is that post
+  // per new post (sample-1 is the first after start): accepted -> a published record whose
+  // lastPostCid is that post
   steadyCycles?: Record<string, {postToRecordTimeSeconds?: number | null; error?: {message: string}}>
+  // the first new post after start. Pre-v0.0.108 versions are still working through the board then
+  // (minutes, against ~7s once warm), so it is reported on its own and kept out of the median
+  firstPostToRecordTimeSeconds?: number | null
+  // median of the posts after the first one: the warm, steady-state cycle
   medianPostToRecordTimeSeconds?: number | null
   dbSizeMB?: number | null
   // bytes the community's kubo repo grew by over the whole cell

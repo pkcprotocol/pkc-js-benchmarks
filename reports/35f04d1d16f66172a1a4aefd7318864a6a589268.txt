@@ -712,9 +712,10 @@
 │                                              │ 'node'  │ 'create community (s)'      │ 0.102                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'start (s)'                 │ 32.276                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'start to first update (s)' │ 928.694                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 461.422                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 283.486                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 639.357                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'post to record (s)'        │ 461.421                                            │ 461.421 │ '2/2'   │
 │ board S, posts: active only                  │         │                             │                                                    │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.97 (needs >= 0.0.108)' │ ''      │ ''      │
@@ -724,11 +725,12 @@
 │                                              │ 'node'  │ 'create community (s)'      │ 0.123                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'start (s)'                 │ 32.819                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'start to first update (s)' │ 951.233                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 7.229                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 7.113                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'db size (MB)'              │ 43.61                                              │ ''      │ ''      │
 │                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 128.11                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 139.359                                            │ ''      │ ''      │
 │                                              │ 'node'  │ 'post to record (s)'        │ 7.229                                              │ 51.195  │ '3/3'   │
 └──────────────────────────────────────────────┴─────────┴─────────────────────────────┴────────────────────────────────────────────────────┴─────────┴─────────┘
   board S, default sorts (cpu profiled) (node) process: rss 958.11MB, heap after gc 61.6MB, cpu 1422275ms, event loop p99 8757.71ms max 131868.92ms, gc 11209.3ms | cpu profile (1357010ms sampled): @pkcprotocol/pkc-js 1251993ms, better-sqlite3 22254ms, (node) 18633ms, (garbage collector) 12405ms, (native) 11117ms, (idle) 9281ms
