@@ -708,29 +708,31 @@
 │                                              │         │                             │                                                    │         │         │
 │                                              │         │                             │                                                    │         │         │
 │ board S, default sorts                       │         │                             │                                                    │         │         │
-│                                              │ 'node'  │ 'error'                     │ 'cell timed out after 35 minutes'                  │ ''      │ ''      │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.102                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 32.276                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 928.694                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 283.486                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.103                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 32.306                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 947.669                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 132.759                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 6.738                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'db size (MB)'              │ 43.61                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 129.94                                             │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
 │                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'first post to record (s)'  │ 639.357                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 461.421                                            │ 461.421 │ '2/2'   │
+│                                              │ 'node'  │ 'post to record (s)'        │ 6.763                                              │ 38.238  │ '4/4'   │
+│ board S, default sorts (cpu profiled)        │         │                             │                                                    │         │         │
+│                                              │ 'node'  │ 'create community (s)'      │ 0.107                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'start (s)'                 │ 32.024                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'start to first update (s)' │ 981.433                                            │ ''      │ ''      │
+│                                              │ 'node'  │ 'first post to record (s)'  │ 135.28                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'median post to record (s)' │ 7.02                                               │ ''      │ ''      │
+│                                              │ 'node'  │ 'db size (MB)'              │ 43.61                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 137.16                                             │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
+│                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
+│                                              │ 'node'  │ 'post to record (s)'        │ 7.069                                              │ 39.105  │ '4/4'   │
 │ board S, posts: active only                  │         │                             │                                                    │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.97 (needs >= 0.0.108)' │ ''      │ ''      │
 │ board S, posts: hot only, replies: best only │         │                             │                                                    │         │         │
 │                                              │ 'node'  │ 'unsupported'               │ 'unsupported in pkc-js v0.0.97 (needs >= 0.0.108)' │ ''      │ ''      │
-│ board S, default sorts (cpu profiled)        │         │                             │                                                    │         │         │
-│                                              │ 'node'  │ 'create community (s)'      │ 0.123                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'start (s)'                 │ 32.819                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'start to first update (s)' │ 951.233                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'median post to record (s)' │ 7.113                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'db size (MB)'              │ 43.61                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'ipfs repo growth (MB)'     │ 128.11                                             │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture posts'             │ 300                                                │ ''      │ ''      │
-│                                              │ 'node'  │ 'fixture comments'          │ 15874                                              │ ''      │ ''      │
-│                                              │ 'node'  │ 'first post to record (s)'  │ 139.359                                            │ ''      │ ''      │
-│                                              │ 'node'  │ 'post to record (s)'        │ 7.229                                              │ 51.195  │ '3/3'   │
 └──────────────────────────────────────────────┴─────────┴─────────────────────────────┴────────────────────────────────────────────────────┴─────────┴─────────┘
-  board S, default sorts (cpu profiled) (node) process: rss 958.11MB, heap after gc 61.6MB, cpu 1422275ms, event loop p99 8757.71ms max 131868.92ms, gc 11209.3ms | cpu profile (1357010ms sampled): @pkcprotocol/pkc-js 1251993ms, better-sqlite3 22254ms, (node) 18633ms, (garbage collector) 12405ms, (native) 11117ms, (idle) 9281ms
+  board S, default sorts (node) process: rss 992.3MB, heap after gc 60.59MB, cpu 1527087ms, event loop p99 8866.76ms max 127037.08ms, gc 11324.3ms
+  board S, default sorts (cpu profiled) (node) process: rss 966.64MB, heap after gc 61.82MB, cpu 1605477ms, event loop p99 9344.91ms max 128849.02ms, gc 12244.4ms | cpu profile (1529010ms sampled): @pkcprotocol/pkc-js 1419359ms, better-sqlite3 23563ms, (node) 18910ms, (garbage collector) 13843ms, (native) 12351ms, (idle) 8767ms
