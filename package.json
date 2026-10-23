@@ -53,5 +53,12 @@
     "playwright": "1.59.1",
     "typescript": "6.0.3",
     "vitest": "4.1.12"
+  },
+  "overrides": {
+    "probe-image-size": "7.4.0",
+    "protobufjs@6": "7.6.6",
+    "undici@7": "7.29.1",
+    "uuid@13": "13.0.1",
+    "ws@8": "8.21.0"
   }
 }
