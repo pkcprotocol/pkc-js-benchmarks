@@ -67,6 +67,9 @@ test('benchmark', async () => {
         challengeVerificationTimeSeconds: null,
       }
       let beforeTimestamp = Date.now()
+      // given communityPublicKey, pkc-js goes straight to fetching-community-ipns without a resolving
+      // state: then nothing was resolved and resolvingAddressTimeSeconds stays null
+      let resolvingSeen = false
 
       const getRandomString = () => (Math.random() + 1).toString(36).replace('.', '')
       const signer = await (pkc as unknown as {createSigner: () => Promise<unknown>}).createSigner()
@@ -116,8 +119,9 @@ test('benchmark', async () => {
         // 'resolving-community-name' since pkc-js 0.0.60; the old name kept for older releases
         if (publishingState === 'resolving-community-name' || publishingState === 'resolving-community-address') {
           beforeTimestamp = Date.now()
+          resolvingSeen = true
         }
-        if (publishingState === 'fetching-community-ipns') {
+        if (publishingState === 'fetching-community-ipns' && resolvingSeen) {
           if (metrics.resolvingAddressTimeSeconds) return
           metrics.resolvingAddressTimeSeconds = (Date.now() - beforeTimestamp) / 1000
           console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)

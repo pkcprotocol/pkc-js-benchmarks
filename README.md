@@ -69,6 +69,17 @@ every release, as monitoring of what a real client sees, but their numbers move 
 infrastructure's load and health, so they are not a version-to-version comparison and are never
 backfilled. For that, use the local-community cells.
 
+### resolve-addresses benchmark
+
+Each cell creates the 5chan boards by name only, so pkc-js has to resolve every name with the cell's
+resolvers before it fetches the board's IPNS record. `resolvingAddressTimeSeconds` is the time from
+`resolving-name` to `fetching-ipns`, and it stays `null` for a name that did not resolve. The
+`ethers.js` and `web3.js` cells configure no resolver (`lib/build-pkc-options.ts` drops both
+providers), so they resolve nothing. `fetch-ipns`, `load-communities` and `publish` pass each board's
+public key, so pkc-js resolves no name on their path and their `resolvingAddressTimeSeconds` is `null`.
+Entries from an older harness hold the time from `createCommunity` to `fetching-ipns` (about 0.02-0.04s)
+in that field, not a name resolution, so they are not comparable.
+
 ### CI: releases, backfill, soak
 
 - `benchmark-releases.yml` polls npm every 6h and benchmarks every release without a report (full matrix + profiled repetitions). All three workflows push through `scripts/commit-reports.sh`, which rebases onto concurrent pushes and rebuilds `reports/all.json`; backfill and soak have their own concurrency groups (a pending run in a shared group would be cancelled by the next release cron).
