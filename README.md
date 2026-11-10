@@ -22,6 +22,11 @@ Every benchmark is one row of `lib/benchmark-registry.ts`. Each cell (one option
 runs in a fresh process with a wall-time cap; a cell that crashes, hangs past its cap, or needs a
 newer pkc-js than the one installed (`minPkcJsVersion` on its options) still leaves a report entry,
 with an `error` (and `unsupported: true`), so "not measured" can always be told from "failed".
+A run cut short by SIGTERM or Ctrl-C (CI's `RUN_TIMEOUT` in `scripts/benchmark-version.sh`) kills the
+running cell, gives every cell it did not finish an `error` entry with `interrupted: true`, stamps the
+report and exits non-zero; backfill and soak merges leave the `interrupted` entries out, so they never
+replace a version's earlier measurements, and backfill still lists a version whose benchmark has only
+`interrupted` entries.
 
 ### local-community benchmarks
 
@@ -83,7 +88,7 @@ in that field, not a name resolution, so they are not comparable.
 ### CI: releases, backfill, soak
 
 - `benchmark-releases.yml` polls npm every 6h and benchmarks every release without a report (full matrix + profiled repetitions). All three workflows push through `scripts/commit-reports.sh`, which rebases onto concurrent pushes and rebuilds `reports/all.json`; backfill and soak have their own concurrency groups (a pending run in a shared group would be cancelled by the next release cron).
-- `benchmark-backfill.yml` (manual) runs only the named benchmarks on the last N releases that don't have them yet, and **merges** them into each version's report (`scripts/merge-report.ts` replaces exactly the cells it re-measured). It never writes `.failed`. It also benchmarks a fixed anchor version every few versions in the same job and stamps each backfilled entry with `anchor.ratios` (its median ÷ the anchor's, per metric), since hosted runners differ enough to fake a regression in absolute numbers.
+- `benchmark-backfill.yml` (manual) runs only the named benchmarks on the last N releases that don't have them yet (a benchmark whose entries are all `interrupted`, because a release run was cut short before it, counts as missing), and **merges** them into each version's report (`scripts/merge-report.ts` replaces exactly the cells it re-measured). It never writes `.failed`. It also benchmarks a fixed anchor version every few versions in the same job and stamps each backfilled entry with `anchor.ratios` (its median ÷ the anchor's, per metric), since hosted runners differ enough to fake a regression in absolute numbers.
 - `benchmark-soak.yml` (weekly) runs `soak` and the M seeded board on the latest release.
 
 The remote-community reply-propagation cells need the remote community's current challenge answer

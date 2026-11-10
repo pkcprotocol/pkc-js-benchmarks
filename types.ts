@@ -232,6 +232,8 @@ export interface BenchmarkReport {
   // the cell did not produce a measurement (crash, timeout, unsupported); written by start.ts
   error?: {message: string}
   unsupported?: boolean
+  // the run was cut short (start.ts got SIGTERM/SIGINT) before this cell finished: not measured
+  interrupted?: boolean
   // see BaseBenchmarkOptions.environmentDependent; stamped by start.ts
   environmentDependent?: boolean
   // stamped on every entry by start.ts
