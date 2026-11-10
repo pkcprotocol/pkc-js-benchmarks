@@ -7,6 +7,7 @@ import {localKuboNodes, kuboRpcUrl, kuboHttpRouterUrl} from './local-kubo-config
 import {buildPkcOptions} from './build-pkc-options.ts'
 import {startProcessMetrics, type ProcessMetricsSampler} from './process-metrics.ts'
 import {startInProcessProfile, stopInProcessProfile} from './cpu-profile.ts'
+import {withDeadline} from './script-mesh.ts'
 import type {
   CpuProfileSummary,
   LocalChallengeKind,
@@ -32,6 +33,10 @@ const dataPath = path.join(rootPath, '.pkc-local-community')
 
 // the answer to the question challenge of the harness's `question` community
 export const localChallengeAnswer = 'pkc-js-benchmarks'
+
+// A started local community publishes its first record within seconds. One that never does (its
+// IPNS publish keeps failing) would leave community(), every later cell and stop() waiting forever.
+const firstUpdateTimeoutMs = 1000 * 60 * 3
 
 interface PkcLike {
   createSigner: () => Promise<any>
@@ -138,8 +143,16 @@ class LocalCommunityHost {
   private remotePublishers = new Map<string, Promise<PkcLike>>()
   private publicReaderNodePromise?: Promise<KuboNode>
 
+  // Every memoized promise below is dropped when it rejects, so the next cell tries again instead of
+  // rethrowing one transient failure for the rest of the run.
   async start(): Promise<void> {
-    if (!this.startPromise) this.startPromise = this._start()
+    if (!this.startPromise) {
+      const starting = this._start()
+      starting.catch(() => {
+        if (this.startPromise === starting) this.startPromise = undefined
+      })
+      this.startPromise = starting
+    }
     return this.startPromise
   }
 
@@ -148,7 +161,7 @@ class LocalCommunityHost {
   // shut the node down). IPNS then resolves over ipns-over-pubsub, exactly as in production.
   private async ensurePublicReaderNode(httpRouters: string[]): Promise<KuboNode> {
     if (!this.publicReaderNodePromise) {
-      this.publicReaderNodePromise = (async () => {
+      const starting = (async () => {
         const node = await startKuboNode({
           config: localKuboNodes.publicReader,
           dir: path.join(dataPath, 'kubo-public-reader'),
@@ -159,6 +172,10 @@ class LocalCommunityHost {
         this._killNodesOnProcessExit()
         return node
       })()
+      starting.catch(() => {
+        if (this.publicReaderNodePromise === starting) this.publicReaderNodePromise = undefined
+      })
+      this.publicReaderNodePromise = starting
     }
     return this.publicReaderNodePromise
   }
@@ -167,12 +184,16 @@ class LocalCommunityHost {
     const key = JSON.stringify(options.publisherPkcOptions ?? {})
     let publisher = this.remotePublishers.get(key)
     if (!publisher) {
-      publisher = (async () => {
+      const creating = (async () => {
         const pkc = (await PKC(buildPkcOptions(options.publisherPkcOptions ?? {}))) as unknown as PkcLike
         pkc.on('error', (e: Error) => console.log('reply-propagation remote publisher pkc error:', e.message))
         return pkc
       })()
-      this.remotePublishers.set(key, publisher)
+      creating.catch(() => {
+        if (this.remotePublishers.get(key) === creating) this.remotePublishers.delete(key)
+      })
+      this.remotePublishers.set(key, creating)
+      publisher = creating
     }
     return publisher
   }
@@ -198,10 +219,13 @@ class LocalCommunityHost {
       dir: path.join(dataPath, 'kubo-community'),
       exposeRoutingApi: true,
     })
+    // appended (the public reader node may already be in nodes) as soon as each is up, so stop() and
+    // the exit handler still stop it when a later step of the boot fails
+    this.nodes.push(communityNode)
     const publisherNode = await startKuboNode({config: localKuboNodes.publisher, dir: path.join(dataPath, 'kubo-publisher')})
+    this.nodes.push(publisherNode)
     const readerNode = await startKuboNode({config: localKuboNodes.reader, dir: path.join(dataPath, 'kubo-reader')})
-    // appended: the public reader node may already be in nodes, and stop() must still stop it
-    this.nodes.push(communityNode, publisherNode, readerNode)
+    this.nodes.push(readerNode)
     this.communityNode = communityNode
     await connectKuboNodes(publisherNode, communityNode)
     await connectKuboNodes(readerNode, communityNode)
@@ -238,7 +262,7 @@ class LocalCommunityHost {
     await this.start()
     let community = this.communities.get(challenge)
     if (!community) {
-      community = (async () => {
+      const creating = (async () => {
         const pkc = this.communityPkc!
         const created = await pkc.createCommunity({signer: await pkc.createSigner()})
         const challenges =
@@ -247,11 +271,20 @@ class LocalCommunityHost {
             : [] // headless clients can't answer the default challenge
         await created.edit({settings: {challenges}})
         await created.start()
-        await new Promise((resolve) => created.once('update', resolve))
+        try {
+          await withDeadline(new Promise((resolve) => created.once('update', resolve)), firstUpdateTimeoutMs, `local community (challenge: ${challenge}) first update`)
+        } catch (e) {
+          await created.stop().catch(() => {})
+          throw e
+        }
         console.log(`local community (challenge: ${challenge}) ready: ${created.address}`)
         return created
       })()
-      this.communities.set(challenge, community)
+      creating.catch(() => {
+        if (this.communities.get(challenge) === creating) this.communities.delete(challenge)
+      })
+      this.communities.set(challenge, creating)
+      community = creating
     }
     return community
   }
