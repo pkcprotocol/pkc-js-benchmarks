@@ -185,7 +185,9 @@ class LocalCommunityHost {
   }
 
   private async _start(): Promise<void> {
-    fs.removeSync(dataPath)
+    // only the clients' dirs: startKuboNode wipes each node's own dir, and a remote reply-propagation
+    // cell may already run the public reader node from dataPath/kubo-public-reader
+    for (const dir of ['pkc-community', 'pkc-publisher']) fs.removeSync(path.join(dataPath, dir))
     this._killNodesOnProcessExit()
 
     // The community node also serves /routing/v1 (Gateway.ExposeRoutingAPI) so a libp2p-js
@@ -198,7 +200,8 @@ class LocalCommunityHost {
     })
     const publisherNode = await startKuboNode({config: localKuboNodes.publisher, dir: path.join(dataPath, 'kubo-publisher')})
     const readerNode = await startKuboNode({config: localKuboNodes.reader, dir: path.join(dataPath, 'kubo-reader')})
-    this.nodes = [communityNode, publisherNode, readerNode]
+    // appended: the public reader node may already be in nodes, and stop() must still stop it
+    this.nodes.push(communityNode, publisherNode, readerNode)
     this.communityNode = communityNode
     await connectKuboNodes(publisherNode, communityNode)
     await connectKuboNodes(readerNode, communityNode)
