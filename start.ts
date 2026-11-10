@@ -9,7 +9,7 @@ import benchmarkOptionsFile from './benchmark-options.ts'
 import startServer from './lib/server.ts'
 import {localCommunityHost} from './lib/local-community-host.ts'
 import {isAtLeast} from './lib/semver.ts'
-import {profilesPath, slugify, summarizeCpuProfileFile} from './lib/cpu-profile.ts'
+import {discardInProcessProfile, profilesPath, slugify, summarizeCpuProfileFile} from './lib/cpu-profile.ts'
 import {benchmarks, type BenchmarkDefinition} from './lib/benchmark-registry.ts'
 import type {BaseBenchmarkOptions, BenchmarkReport, RunEnvironment, Runtime} from './types.ts'
 
@@ -171,6 +171,9 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
   } else {
     result = await runProcess('npm', ['run', 'benchmark:browser', '--', `benchmark/${benchmark.file}`], {...env, BENCHMARK_FILE: benchmark.file}, timeoutMs)
   }
+  // the server runs in this process: a profiled cell that died before /profile/stop must not leave the
+  // profiler sampling the community through the next cells
+  if (discardInProcessProfile()) console.log(`'${reportName}' (${runtime}) left a cpu profile running in the server, discarded it`)
 
   const reports = readReports()
   const mine = reports.filter((r) => r.type === benchmark.optionsType && r.name === reportName && r.runtime === runtime)
