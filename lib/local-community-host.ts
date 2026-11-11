@@ -3,7 +3,7 @@ import path from 'node:path'
 import {fileURLToPath} from 'node:url'
 import PKC from '@pkcprotocol/pkc-js'
 import {startKuboNode, connectKuboNodes, type KuboNode} from './kubo-nodes.ts'
-import {localKuboNodes, kuboRpcUrl, kuboHttpRouterUrl} from './local-kubo-config.ts'
+import {localKuboNodes, kuboRpcUrl, kuboHttpRouterUrl, type KuboNodeConfig} from './local-kubo-config.ts'
 import {buildPkcOptions} from './build-pkc-options.ts'
 import {startProcessMetrics, type ProcessMetricsSampler} from './process-metrics.ts'
 import {startInProcessProfile, stopInProcessProfile} from './cpu-profile.ts'
@@ -147,7 +147,10 @@ class LocalCommunityHost {
   // rethrowing one transient failure for the rest of the run.
   async start(): Promise<void> {
     if (!this.startPromise) {
-      const starting = this._start()
+      const starting = this._start().catch(async (e) => {
+        await this._discardFailedStart()
+        throw e
+      })
       starting.catch(() => {
         if (this.startPromise === starting) this.startPromise = undefined
       })
@@ -255,6 +258,27 @@ class LocalCommunityHost {
       validatePages: false,
     } as never)) as unknown as PkcLike
     this.publisherPkc.on('error', (e: Error) => console.log('local publisher pkc error:', e.message))
+  }
+
+  // A failed boot must leave nothing behind for the retry to orphan: the retry wipes the clients' dirs
+  // and overwrites communityPkc/publisherPkc, so a client created before the failure could never be
+  // destroyed, and the mesh daemons already up would keep running until the retry's shutdownStaleNode
+  // reached their ports. The public reader node is not part of the boot and stays up.
+  private async _discardFailedStart(): Promise<void> {
+    for (const pkc of [this.publisherPkc, this.communityPkc]) {
+      try {
+        await pkc?.destroy()
+      } catch (e) {
+        // already destroyed
+      }
+    }
+    this.communityPkc = undefined
+    this.publisherPkc = undefined
+    this.communityNode = undefined
+    const meshConfigs: KuboNodeConfig[] = [localKuboNodes.community, localKuboNodes.publisher, localKuboNodes.reader]
+    const meshNodes = this.nodes.filter((node) => meshConfigs.includes(node.config))
+    await Promise.all(meshNodes.map((node) => node.stop()))
+    this.nodes = this.nodes.filter((node) => !meshNodes.includes(node))
   }
 
   // One community per challenge kind, created on first use and kept for the rest of the run.
