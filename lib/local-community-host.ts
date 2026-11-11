@@ -298,7 +298,8 @@ class LocalCommunityHost {
         try {
           await withDeadline(new Promise((resolve) => created.once('update', resolve)), firstUpdateTimeoutMs, `local community (challenge: ${challenge}) first update`)
         } catch (e) {
-          await created.stop().catch(() => {})
+          // bounded too: pkc-js's stop() awaits the community's publish loop, the very thing that is stuck
+          await withDeadline(created.stop(), 30_000, `local community (challenge: ${challenge}) stop`).catch(() => {})
           throw e
         }
         console.log(`local community (challenge: ${challenge}) ready: ${created.address}`)
