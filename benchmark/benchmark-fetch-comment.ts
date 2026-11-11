@@ -98,7 +98,10 @@ test('benchmark', async () => {
           beforeTimestamp = Date.now()
           return
         }
-        if (metrics.fetchCommentIpfsTimeSeconds === null && updatingState !== 'stopped') {
+        // pkc-js goes from fetching-ipfs straight to 'waiting-retry' (e.g. the gateway failed) or 'failed'
+        // when the CommentIpfs did not load: those are no fetch, so the metric stays null
+        const commentIpfsFailed = updatingState === 'waiting-retry' || updatingState === 'failed'
+        if (metrics.fetchCommentIpfsTimeSeconds === null && updatingState !== 'stopped' && !commentIpfsFailed) {
           metrics.fetchCommentIpfsTimeSeconds = (Date.now() - beforeTimestamp) / 1000
           console.log(`fetched comment ipfs ${getCommentUrlPath()} in ${metrics.fetchCommentIpfsTimeSeconds}s`)
         }

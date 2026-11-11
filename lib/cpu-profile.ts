@@ -173,8 +173,21 @@ export const slugify = (string: string): string =>
 // In-process profiling of the benchmark server (it hosts the local community). One at a time.
 let session: inspector.Session | undefined
 
+// Drops a profile whose cell died between /profile/start and /profile/stop (killed at its cap, or
+// threw mid-rounds): without this every later profiled cell of the run failed at /profile/start, and
+// the plain cells in between ran with the profiler still sampling the community. Returns whether
+// there was one.
+export const discardInProcessProfile = (): boolean => {
+  if (!session) return false
+  const leftover = session
+  session = undefined
+  leftover.post('Profiler.stop', () => {})
+  leftover.disconnect()
+  return true
+}
+
 export const startInProcessProfile = async (): Promise<void> => {
-  if (session) throw Error('a cpu profile is already running')
+  if (discardInProcessProfile()) console.log('discarded a cpu profile an earlier cell left running')
   session = new inspector.Session()
   session.connect()
   const post = (method: string, params?: object) =>

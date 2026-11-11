@@ -9,7 +9,7 @@ import benchmarkOptionsFile from './benchmark-options.ts'
 import startServer from './lib/server.ts'
 import {localCommunityHost} from './lib/local-community-host.ts'
 import {isAtLeast} from './lib/semver.ts'
-import {profilesPath, slugify, summarizeCpuProfileFile} from './lib/cpu-profile.ts'
+import {discardInProcessProfile, profilesPath, slugify, summarizeCpuProfileFile} from './lib/cpu-profile.ts'
 import {benchmarks, type BenchmarkDefinition} from './lib/benchmark-registry.ts'
 import type {BaseBenchmarkOptions, BenchmarkReport, RunEnvironment, Runtime} from './types.ts'
 
@@ -84,6 +84,9 @@ const writeReports = (reports: BenchmarkReport[]) => fs.writeFileSync(reportPath
 
 const appendReport = (entry: BenchmarkReport) => writeReports([...readReports(), entry])
 
+// the process group of the cell running now, for onInterrupt below
+let runningCellPid: number | undefined
+
 // Run one cell in its own process group, so a cap can kill npm, vitest and chromium together.
 const runProcess = (
   command: string,
@@ -98,6 +101,7 @@ const runProcess = (
       detached: true,
       stdio: argv.debugPkcJs ? 'inherit' : 'pipe',
     })
+    runningCellPid = child.pid
     child.stdout?.on('data', (data: Buffer) => process.stdout.write(`${data}`))
     child.stderr?.on('data', (data: Buffer) => process.stderr.write(`${data}`))
     let timedOut = false
@@ -112,6 +116,7 @@ const runProcess = (
     }, timeoutMs)
     child.on('close', (code) => {
       clearTimeout(timer)
+      runningCellPid = undefined
       // whatever the cell left running in its group (chromium, a kubo it spawned) goes with it
       try {
         process.kill(-child.pid!, 'SIGKILL')
@@ -171,6 +176,9 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
   } else {
     result = await runProcess('npm', ['run', 'benchmark:browser', '--', `benchmark/${benchmark.file}`], {...env, BENCHMARK_FILE: benchmark.file}, timeoutMs)
   }
+  // the server runs in this process: a profiled cell that died before /profile/stop must not leave the
+  // profiler sampling the community through the next cells
+  if (discardInProcessProfile()) console.log(`'${reportName}' (${runtime}) left a cpu profile running in the server, discarded it`)
 
   const reports = readReports()
   const mine = reports.filter((r) => r.type === benchmark.optionsType && r.name === reportName && r.runtime === runtime)
@@ -204,39 +212,35 @@ const runCell = async (benchmark: BenchmarkDefinition, options: BaseBenchmarkOpt
   }
 }
 
-let hostRunning = false
+// every cell of this run, in order, decided up front so that an interrupted run knows which cells it
+// did not finish (see onInterrupt)
+interface PlannedCell {
+  benchmark: BenchmarkDefinition
+  options: BaseBenchmarkOptions & {cellTimeoutMinutes?: number}
+  runtime: Runtime
+  profiled: boolean
+}
+const plannedCells: PlannedCell[] = []
 for (const benchmark of benchmarks) {
   if (!isBenchmark(benchmark)) continue
-  // the local community host's mesh is only needed by the benchmarks that use it; stop it before
-  // the next one so its kubo daemons don't sit in the background of unrelated measurements
-  if (hostRunning && !benchmark.usesLocalCommunityHost) {
-    await localCommunityHost.stop()
-    hostRunning = false
-  }
   const allOptions = (benchmarkOptionsFile[benchmark.optionsType] ?? []) as (BaseBenchmarkOptions & {cellTimeoutMinutes?: number})[]
   const narrowed = onlyCells.length > 0 && allOptions.some((options) => matchesOnly(options.name))
-  console.log(`benchmarking ${benchmark.name}...`)
   for (const runtime of benchmark.runtimes) {
     if (!isRuntime(runtime)) continue
     for (const options of allOptions) {
       if (options.runtimes && !options.runtimes.includes(runtime)) continue
       if (narrowed && !matchesOnly(options.name)) continue
-      const profiledRun = benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)
-      if (argv.profiledOnly && !profiledRun) continue
-      if (benchmark.usesLocalCommunityHost) hostRunning = true
-      if (!argv.profiledOnly) await runCell(benchmark, options, runtime)
       // the profiled repetition is node only: in chromium the community side is what gets profiled,
       // and that already happens on the node repetition
-      if ((argv.profile || argv.profiledOnly) && benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)) {
-        await runCell(benchmark, options, runtime, true)
-      }
+      const profiledRun = benchmark.profile && options.profile && runtime === 'node' && isAtLeast(pkcJsVersion, options.minPkcJsVersion)
+      if (!argv.profiledOnly) plannedCells.push({benchmark, options, runtime, profiled: false})
+      if ((argv.profile || argv.profiledOnly) && profiledRun) plannedCells.push({benchmark, options, runtime, profiled: true})
     }
   }
 }
-if (hostRunning) await localCommunityHost.stop()
 
-// stamp every entry with what was measured and where (see RunEnvironment)
-const measuredAt = new Date().toISOString()
+// stamp every entry with what was measured and where (see RunEnvironment); entries already stamped
+// keep their values
 const environmentDependentCells = new Set<string>()
 for (const benchmark of benchmarks) {
   for (const options of (benchmarkOptionsFile[benchmark.optionsType] ?? []) as BaseBenchmarkOptions[]) {
@@ -246,16 +250,79 @@ for (const benchmark of benchmarks) {
     }
   }
 }
-writeReports(
-  readReports().map((entry) => ({
-    pkcJsVersion,
-    ...(harnessCommit ? {harnessCommit} : {}),
-    measuredAt,
-    environment,
-    ...(environmentDependentCells.has(`${entry.type}|${entry.name}`) ? {environmentDependent: true} : {}),
-    ...entry,
-  })),
-)
+const stampReports = () => {
+  const measuredAt = new Date().toISOString()
+  writeReports(
+    readReports().map((entry) => ({
+      pkcJsVersion,
+      ...(harnessCommit ? {harnessCommit} : {}),
+      measuredAt,
+      environment,
+      ...(environmentDependentCells.has(`${entry.type}|${entry.name}`) ? {environmentDependent: true} : {}),
+      ...entry,
+    })),
+  )
+}
+
+// A run cut short (SIGTERM from scripts/benchmark-version.sh's RUN_TIMEOUT, which npm forwards here,
+// or Ctrl-C) used to leave report.json with unstamped entries and no entry at all for the cells it
+// never got to, which CI then filed as the version's complete report. Now the cell running is
+// killed, every cell without an entry gets an `interrupted` error entry, everything is stamped, and
+// the exit status says the run did not finish (scripts/benchmark-version.sh).
+let interrupted = false
+const onInterrupt = (signal: 'SIGINT' | 'SIGTERM') => {
+  if (interrupted) return
+  interrupted = true
+  console.log(`${signal}: run interrupted, writing an error entry for every cell it did not finish`)
+  if (runningCellPid) {
+    try {
+      process.kill(-runningCellPid, 'SIGKILL')
+    } catch (e) {
+      // already gone
+    }
+  }
+  const reports = readReports()
+  const reported = new Set(reports.map((entry) => `${entry.type}|${entry.name}|${entry.runtime}`))
+  for (const {benchmark, options, runtime, profiled} of plannedCells) {
+    const name = options.name + (profiled ? profiledSuffix : '')
+    if (reported.has(`${benchmark.optionsType}|${name}|${runtime}`)) continue
+    reports.push({
+      name,
+      type: benchmark.optionsType,
+      timestamp: Date.now(),
+      timeSeconds: 0,
+      runtime,
+      error: {message: `not measured: the run was interrupted (${signal}) before this cell finished`},
+      interrupted: true,
+    })
+  }
+  writeReports(reports)
+  stampReports()
+  // the local community host's exit handler stops its kubo daemons
+  process.exit(signal === 'SIGINT' ? 130 : 143)
+}
+// `on`, not `once`: timeout signals its whole process group and npm forwards the same signal, so a
+// second SIGTERM arrives right away, and with no listener left node would die of it mid-handler
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => onInterrupt(signal))
+
+let hostRunning = false
+let previousBenchmark: BenchmarkDefinition | undefined
+for (const {benchmark, options, runtime, profiled} of plannedCells) {
+  if (benchmark !== previousBenchmark) {
+    // the local community host's mesh is only needed by the benchmarks that use it; stop it before
+    // the next one so its kubo daemons don't sit in the background of unrelated measurements
+    if (hostRunning && !benchmark.usesLocalCommunityHost) {
+      await localCommunityHost.stop()
+      hostRunning = false
+    }
+    console.log(`benchmarking ${benchmark.name}...`)
+    previousBenchmark = benchmark
+  }
+  if (benchmark.usesLocalCommunityHost) hostRunning = true
+  await runCell(benchmark, options, runtime, profiled)
+}
+if (hostRunning) await localCommunityHost.stop()
+stampReports()
 
 if (fs.existsSync(reportPath)) {
   await new Promise<void>((resolve) => {

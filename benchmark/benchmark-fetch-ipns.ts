@@ -60,6 +60,9 @@ test('benchmark', async () => {
         fetchingIpnsTimeSeconds: null,
       }
       let beforeTimestamp = Date.now()
+      // given its publicKey, pkc-js goes straight to fetching-ipns and checks the name in the background
+      // without a resolving state: then nothing was resolved and resolvingAddressTimeSeconds stays null
+      let resolvingSeen = false
       const community = await (pkc as unknown as {
         createCommunity: (a: unknown) => Promise<{
           on: (e: string, h: (arg: any) => void) => void
@@ -75,8 +78,9 @@ test('benchmark', async () => {
         // 'resolving-name' since pkc-js 0.0.60; 'resolving-address' kept for older releases
         if (updatingState === 'resolving-name' || updatingState === 'resolving-address') {
           beforeTimestamp = Date.now()
+          resolvingSeen = true
         }
-        if (updatingState === 'fetching-ipns') {
+        if (updatingState === 'fetching-ipns' && resolvingSeen) {
           if (metrics.resolvingAddressTimeSeconds) return
           metrics.resolvingAddressTimeSeconds = (Date.now() - beforeTimestamp) / 1000
           console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)

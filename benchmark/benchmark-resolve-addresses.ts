@@ -59,29 +59,37 @@ test('benchmark', async () => {
   const beforeReportTimestamp = Date.now()
   const reportCommunities: Record<string, CommunityMetrics> = {}
 
-  const fetchCommunity = ({name: communityName, publicKey: communityPublicKey}: CommunityIdentifier): Promise<void> =>
+  const fetchCommunity = ({name: communityName}: CommunityIdentifier): Promise<void> =>
     new Promise(async (resolve) => {
       reportCommunities[communityName] = {resolvingAddressTimeSeconds: null}
-      let beforeTimestamp = Date.now()
+      // by name only: given the publicKey too, pkc-js fetches the IPNS record by key right away and
+      // resolves the name in the background without a 'resolving-name' state, so nothing here would
+      // time a resolver (every cell, even ones with no resolver configured, reported ~0.03s, v0.0.132)
       const community = await (pkc as unknown as {
         createCommunity: (a: unknown) => Promise<{
           on: (e: string, h: (arg: any) => void) => void
           update: () => void
           stop: () => Promise<void>
         }>
-      }).createCommunity({name: communityName, publicKey: communityPublicKey})
+      }).createCommunity({name: communityName})
       community.on('error', (communityErrorEvent: Error) =>
         console.log('communityErrorEvent:', communityName, communityErrorEvent.message),
       )
+      let resolvingStartedAt: number | undefined
       community.on('updatingstatechange', (updatingState: string) => {
         const metrics = reportCommunities[communityName]!
         // 'resolving-name' since pkc-js 0.0.60; 'resolving-address' kept for older releases
         if (updatingState === 'resolving-name' || updatingState === 'resolving-address') {
-          beforeTimestamp = Date.now()
+          resolvingStartedAt = Date.now()
         }
         if (updatingState === 'fetching-ipns') {
-          metrics.resolvingAddressTimeSeconds = (Date.now() - beforeTimestamp) / 1000
-          console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)
+          // no resolving state before it means no resolver ran: not measured, the metric stays null
+          if (resolvingStartedAt !== undefined) {
+            metrics.resolvingAddressTimeSeconds = (Date.now() - resolvingStartedAt) / 1000
+            console.log(`resolved address ${communityName} in ${metrics.resolvingAddressTimeSeconds}s`)
+          } else {
+            console.log(`failed resolving address ${communityName}: fetching-ipns without a resolving state`)
+          }
           community.stop().catch(() => {})
           resolve()
         }

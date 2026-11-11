@@ -10,7 +10,7 @@
 //   INCLUDE_VERSION=x.y.z  also include this specific version even if already benchmarked
 //   MISSING_BENCHMARKS="a b" backfill mode: instead of versions with no report, list the LAST
 //                          (default 20) most recently published versions whose report has no entry
-//                          of these benchmarks (start.ts --benchmark names, see
+//                          (other than `interrupted` ones) of these benchmarks (start.ts --benchmark names, see
 //                          lib/benchmark-registry.ts). Used by benchmark-backfill.yml.
 //   LAST=20                how many recent versions backfill mode considers
 //   MIN_VERSION=x.y.z      ignore versions older than this (default below). We do NOT
@@ -78,9 +78,12 @@ if (missingBenchmarks.length) {
     const reportFile = path.join(reportsDir, `${r.gitHead}.json`)
     // a version with no report at all gets a full run from benchmark-releases.yml, not a partial one
     if (!fs.existsSync(reportFile)) continue
-    const entries = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {type?: string}[]
+    const entries = JSON.parse(fs.readFileSync(reportFile, 'utf-8')) as {type?: string; interrupted?: boolean}[]
     const forced = r.version === includeVersion
-    if (forced || types.some((type) => !entries.some((entry) => entry.type === type))) console.log(`${r.version} ${r.gitHead}`)
+    // an `interrupted` entry is a cell a release run cut short never measured (start.ts writes one for
+    // every cell it did not finish), so a type with only those still needs backfilling
+    const measured = (type: string) => entries.some((entry) => entry.type === type && !entry.interrupted)
+    if (forced || types.some((type) => !measured(type))) console.log(`${r.version} ${r.gitHead}`)
   }
 } else {
   for (const r of rows) console.log(`${r.version} ${r.gitHead}`)
