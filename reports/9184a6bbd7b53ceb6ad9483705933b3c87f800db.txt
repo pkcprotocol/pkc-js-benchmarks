@@ -1,0 +1,746 @@
+┌────────────────────────────────────────────────────┬──────────┬──────────────────────────┬────────┬─────────┬─────────┐
+│ (index)                                            │ runtime  │ benchmark                │ median │ average │ success │
+├────────────────────────────────────────────────────┼──────────┼──────────────────────────┼────────┼─────────┼─────────┤
+│ PUBLISH                                            │          │                          │        │         │         │
+│                                                    │          │                          │        │         │         │
+│                                                    │          │                          │        │         │         │
+│ https://pubsubprovider.xyz [environment-dependent] │          │                          │        │         │         │
+│                                                    │ 'node'   │ 'challenge request'      │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'node'   │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'node'   │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'node'   │ 'challenge verification' │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge request'      │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge verification' │ NaN    │ NaN     │ '0/1'   │
+│ libp2p js client [environment-dependent]           │          │                          │        │         │         │
+│                                                    │ 'node'   │ 'challenge request'      │ 0.008  │ 0.008   │ '1/1'   │
+│                                                    │ 'node'   │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'node'   │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'node'   │ 'challenge verification' │ 0.175  │ 0.175   │ '1/1'   │
+│                                                    │ 'chrome' │ 'challenge request'      │ 0.01   │ 0.01    │ '1/1'   │
+│                                                    │ 'chrome' │ 'challenge'              │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge answer'       │ NaN    │ NaN     │ '0/1'   │
+│                                                    │ 'chrome' │ 'challenge verification' │ 0.173  │ 0.173   │ '1/1'   │
+└────────────────────────────────────────────────────┴──────────┴──────────────────────────┴────────┴─────────┴─────────┘
+  https://pubsubprovider.xyz (node) process: rss 244.87MB, heap after gc 89.15MB, cpu 1651ms, event loop p99 11.15ms max 258.74ms, gc 46.8ms
+  https://pubsubprovider.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 115.3ms, gc -ms, long tasks 217ms
+  libp2p js client (node) process: rss 334.09MB, heap after gc 135.45MB, cpu 3246ms, event loop p99 67.44ms max 258.87ms, gc 76.5ms
+  libp2p js client (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 132.4ms max 132.4ms, gc -ms, long tasks 284ms
+┌──────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────────────────────────┬────────┬─────────┬─────────┐
+│ (index)                                                                                      │ runtime  │ benchmark                           │ median │ average │ success │
+├──────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────────────────────────┼────────┼─────────┼─────────┤
+│ REPLY PROPAGATION                                                                            │          │                                     │        │         │         │
+│                                                                                              │          │                                     │        │         │         │
+│                                                                                              │          │                                     │        │         │         │
+│ reader: kubo rpc                                                                             │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ 1.149  │ 1.149   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ 0.974  │ 0.974   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ 1.027  │ 1.027   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ 1.048  │ 1.048   │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ 0.039  │ 0.043   │ '10/10' │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ 0.988  │ 0.984   │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ 1.025  │ 1.026   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ 1.164  │ 1.164   │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ 1      │ 1       │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ 1.036  │ 1.036   │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ 1.065  │ 1.067   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ 0.034  │ 0.034   │ '10/10' │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ 0.998  │ 0.998   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ 1.031  │ 1.032   │ '9/9'   │
+│ reader: libp2p js client                                                                     │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ 0.237  │ 0.237   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ 0.074  │ 0.074   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ 0.111  │ 0.111   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ 0.122  │ 0.124   │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ 0.032  │ 0.032   │ '10/10' │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ 0.123  │ 0.122   │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ 0.153  │ 0.154   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ 0.228  │ 0.228   │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ 0.165  │ 0.165   │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ 0.217  │ 0.217   │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ 0.164  │ 0.167   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ 0.044  │ 0.045   │ '10/10' │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ 0.168  │ 0.169   │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ 0.211  │ 0.213   │ '9/9'   │
+│ reader: ipfs gateway                                                                         │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ 0.225  │ 0.225   │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ 10.724 │ 10.724  │ '1/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ 10.759 │ 10.759  │ '1/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ 10.575 │ 10.54   │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ 0.036  │ 0.037   │ '10/10' │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ 10.497 │ 10.575  │ '9/9'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ 10.532 │ 10.612  │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ 10.968 │ 10.968  │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ 10.722 │ 10.722  │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ 10.758 │ 10.758  │ '1/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ 10.549 │ 10.5    │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ 0.037  │ 0.038   │ '10/10' │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ 10.547 │ 10.614  │ '9/9'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ 10.583 │ 10.653  │ '9/9'   │
+│ remote community, reader: kubo rpc [environment-dependent]                                   │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+│ remote community, reader: libp2p js client [environment-dependent]                           │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+│ remote community, reader: ipfs gateway [environment-dependent]                               │          │                                     │        │         │         │
+│                                                                                              │ 'node'   │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'node'   │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'node'   │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'node'   │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'post initial load (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply propagation (first sample)'  │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation (first)' │ NaN    │ NaN     │ '0/1'   │
+│                                                                                              │ 'chrome' │ 'post initial load'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish'                     │ NaN    │ NaN     │ '0/3'   │
+│                                                                                              │ 'chrome' │ 'reply propagation'                 │ NaN    │ NaN     │ '0/2'   │
+│                                                                                              │ 'chrome' │ 'reply publish+propagation'         │ NaN    │ NaN     │ '0/2'   │
+└──────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────────────────────────┴────────┴─────────┴─────────┘
+  reader: kubo rpc (node) process: rss 223.12MB, heap after gc 67.85MB, cpu 829ms, event loop p99 11.77ms max 59.57ms, gc 9.6ms
+  reader: kubo rpc (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 7.1ms max 35.1ms, gc -ms, long tasks 0ms
+  reader: libp2p js client (node) process: rss 294.5MB, heap after gc 111.48MB, cpu 3410ms, event loop p99 23.76ms max 61.11ms, gc 68.3ms
+  reader: libp2p js client (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 22.2ms max 27.9ms, gc -ms, long tasks 0ms
+  reader: ipfs gateway (node) process: rss 227.14MB, heap after gc 66.56MB, cpu 2894ms, event loop p99 11.25ms max 116.65ms, gc 153.7ms
+  reader: ipfs gateway (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 24.7ms, gc -ms, long tasks 64ms
+  remote community, reader: kubo rpc (node) process: rss 216.05MB, heap after gc 62.68MB, cpu 1550ms, event loop p99 11.21ms max 16.83ms, gc 29.9ms
+  remote community, reader: kubo rpc (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 2.4ms, gc -ms, long tasks 0ms
+  remote community, reader: libp2p js client (node) process: rss 257.84MB, heap after gc 101.87MB, cpu 3480ms, event loop p99 11.21ms max 44.47ms, gc 66.8ms
+  remote community, reader: libp2p js client (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 2.6ms, gc -ms, long tasks 0ms
+  remote community, reader: ipfs gateway (node) process: rss 206.04MB, heap after gc 62.35MB, cpu 1498ms, event loop p99 11.21ms max 21.23ms, gc 29.7ms
+  remote community, reader: ipfs gateway (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 4.3ms, gc -ms, long tasks 0ms
+┌──────────────────────────────────────────┬──────────┬───────────────────────────────┬────────┬─────────┬─────────┐
+│ (index)                                  │ runtime  │ benchmark                     │ median │ average │ success │
+├──────────────────────────────────────────┼──────────┼───────────────────────────────┼────────┼─────────┼─────────┤
+│ COMMENT UPDATE PROPAGATION               │          │                               │        │         │         │
+│                                          │          │                               │        │         │         │
+│                                          │          │                               │        │         │         │
+│ reader: kubo rpc                         │          │                               │        │         │         │
+│                                          │ 'node'   │ 'post initial load (s)'       │ 1.105  │ 1.16    │ '3/3'   │
+│                                          │ 'node'   │ 'vote publish (s)'            │ 0.021  │ 0.022   │ '3/3'   │
+│                                          │ 'node'   │ 'vote propagation (s)'        │ 1.018  │ 1.021   │ '3/3'   │
+│                                          │ 'node'   │ 'edit publish (s)'            │ 0.024  │ 0.026   │ '3/3'   │
+│                                          │ 'node'   │ 'edit propagation (s)'        │ 1.018  │ 1.015   │ '3/3'   │
+│                                          │ 'node'   │ 'median vote propagation (s)' │ 1.018  │ ''      │ ''      │
+│                                          │ 'node'   │ 'median edit propagation (s)' │ 1.018  │ ''      │ ''      │
+│                                          │ 'chrome' │ 'post initial load (s)'       │ 1.095  │ 1.131   │ '3/3'   │
+│                                          │ 'chrome' │ 'vote publish (s)'            │ 0.025  │ 0.025   │ '3/3'   │
+│                                          │ 'chrome' │ 'vote propagation (s)'        │ 1.015  │ 1.017   │ '3/3'   │
+│                                          │ 'chrome' │ 'edit publish (s)'            │ 0.022  │ 0.022   │ '3/3'   │
+│                                          │ 'chrome' │ 'edit propagation (s)'        │ 1.015  │ 1.014   │ '3/3'   │
+│                                          │ 'chrome' │ 'median vote propagation (s)' │ 1.015  │ ''      │ ''      │
+│                                          │ 'chrome' │ 'median edit propagation (s)' │ 1.015  │ ''      │ ''      │
+│ reader: libp2p js client                 │          │                               │        │         │         │
+│                                          │ 'node'   │ 'post initial load (s)'       │ 0.211  │ 0.219   │ '3/3'   │
+│                                          │ 'node'   │ 'vote publish (s)'            │ 0.019  │ 0.019   │ '3/3'   │
+│                                          │ 'node'   │ 'vote propagation (s)'        │ 0.16   │ 0.151   │ '3/3'   │
+│                                          │ 'node'   │ 'edit publish (s)'            │ 0.02   │ 0.02    │ '3/3'   │
+│                                          │ 'node'   │ 'edit propagation (s)'        │ 0.164  │ 0.161   │ '3/3'   │
+│                                          │ 'node'   │ 'median vote propagation (s)' │ 0.16   │ ''      │ ''      │
+│                                          │ 'node'   │ 'median edit propagation (s)' │ 0.164  │ ''      │ ''      │
+│                                          │ 'chrome' │ 'post initial load (s)'       │ 0.224  │ 0.221   │ '3/3'   │
+│                                          │ 'chrome' │ 'vote publish (s)'            │ 0.025  │ 0.028   │ '3/3'   │
+│                                          │ 'chrome' │ 'vote propagation (s)'        │ 0.197  │ 0.196   │ '3/3'   │
+│                                          │ 'chrome' │ 'edit publish (s)'            │ 0.031  │ 0.03    │ '3/3'   │
+│                                          │ 'chrome' │ 'edit propagation (s)'        │ 0.198  │ 0.204   │ '3/3'   │
+│                                          │ 'chrome' │ 'median vote propagation (s)' │ 0.197  │ ''      │ ''      │
+│                                          │ 'chrome' │ 'median edit propagation (s)' │ 0.198  │ ''      │ ''      │
+│ reader: ipfs gateway                     │          │                               │        │         │         │
+│                                          │ 'node'   │ 'post initial load (s)'       │ 5.459  │ 5.459   │ '2/2'   │
+│                                          │ 'node'   │ 'vote publish (s)'            │ 0.03   │ 0.03    │ '2/2'   │
+│                                          │ 'node'   │ 'vote propagation (s)'        │ 10.893 │ 10.893  │ '2/2'   │
+│                                          │ 'node'   │ 'edit publish (s)'            │ 0.027  │ 0.027   │ '2/2'   │
+│                                          │ 'node'   │ 'edit propagation (s)'        │ 10.467 │ 10.467  │ '2/2'   │
+│                                          │ 'node'   │ 'median vote propagation (s)' │ 10.893 │ ''      │ ''      │
+│                                          │ 'node'   │ 'median edit propagation (s)' │ 10.467 │ ''      │ ''      │
+└──────────────────────────────────────────┴──────────┴───────────────────────────────┴────────┴─────────┴─────────┘
+  reader: kubo rpc (node) process: rss 223.95MB, heap after gc 67.8MB, cpu 1068ms, event loop p99 19.09ms max 88.8ms, gc 27.3ms
+  reader: kubo rpc (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 31ms max 38.9ms, gc -ms, long tasks 83ms
+  reader: libp2p js client (node) process: rss 292.16MB, heap after gc 110.11MB, cpu 3029ms, event loop p99 51.45ms max 78.25ms, gc 73.2ms
+  reader: libp2p js client (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 25.1ms max 25.1ms, gc -ms, long tasks 118ms
+  reader: ipfs gateway (node) process: rss 225.24MB, heap after gc 69.14MB, cpu 1512ms, event loop p99 11.37ms max 132.58ms, gc 63.8ms
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬──────────────────────────────────────┬────────┬─────────┬──────────┐
+│ (index)                                                                                                                                                                                │ runtime  │ benchmark                            │ median │ average │ success  │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼──────────────────────────────────────┼────────┼─────────┼──────────┤
+│ LOCAL PUBLISH                                                                                                                                                                          │          │                                      │        │         │          │
+│                                                                                                                                                                                        │          │                                      │        │         │          │
+│                                                                                                                                                                                        │          │                                      │        │         │          │
+│ publisher: kubo rpc, challenge: none, burst: 1                                                                                                                                         │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 0.044  │ 0.053   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.273  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 0.044  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 0.101  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 0.101  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 17.24  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 55.61  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ 0.051  │ 0.112   │ '10/10'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'warmup publish to verification (s)' │ 0.233  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'median publish to verification (s)' │ 0.051  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'p95publish to verification (s)'     │ 0.346  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'max publish to verification (s)'    │ 0.346  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 8.64   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'community cpu per publication (ms)' │ 199.1  │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: none, burst: 10                                                                                                                                        │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 0.305  │ 1.331   │ '29/30'  │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.284  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 0.305  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 10.264 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 10.266 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 1.39   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 29     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 1      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 52.59  │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: none, burst: 50                                                                                                                                        │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 2.505  │ 3.562   │ '61/100' │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.294  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 2.505  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 11.46  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 11.629 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0.51   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 61     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 39     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 116.93 │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: question, burst: 1                                                                                                                                     │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.028  │ 0.027   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to challenge (s)'           │ 0.025  │ 0.026   │ '10/10'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 10     │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: question, burst: 1 (cpu profiled)                                                                                                                      │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.028  │ 0.029   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 10     │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: question, burst: 10                                                                                                                                    │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/30'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.246  │ 0.978   │ '27/30'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 30     │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: question, burst: 50                                                                                                                                    │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/100'  │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 1.653  │ 2.806   │ '57/100' │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 100    │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: none, burst: 1                                                                                                                                 │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 0.04   │ 0.066   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.407  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 0.04   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 0.161  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 0.161  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 14.41  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 101.06 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ 0.039  │ 0.088   │ '10/10'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'warmup publish to verification (s)' │ 0.826  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'median publish to verification (s)' │ 0.039  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'p95publish to verification (s)'     │ 0.292  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'max publish to verification (s)'    │ 0.292  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 11.04  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'community cpu per publication (ms)' │ 159.11 │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: none, burst: 10                                                                                                                                │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 0.272  │ 0.915   │ '30/30'  │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.387  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 0.272  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 10.074 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 10.118 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 1.46   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 30     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 58.68  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ 0.217  │ 1.242   │ '30/30'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'warmup publish to verification (s)' │ 0.418  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'median publish to verification (s)' │ 0.217  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'p95publish to verification (s)'     │ 10.076 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'max publish to verification (s)'    │ 10.079 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 1.46   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 30     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'community cpu per publication (ms)' │ 59.94  │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: none, burst: 50                                                                                                                                │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 1.151  │ 4.102   │ '89/100' │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.4    │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 1.151  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 10.512 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 10.525 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0.74   │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 89     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 11     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 71.63  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ 1.115  │ 4.51    │ '96/100' │
+│                                                                                                                                                                                        │ 'chrome' │ 'warmup publish to verification (s)' │ 0.944  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'median publish to verification (s)' │ 1.115  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'p95publish to verification (s)'     │ 10.61  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'max publish to verification (s)'    │ 10.642 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 0.8    │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 96     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 4      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'community cpu per publication (ms)' │ 109.21 │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: question, burst: 1                                                                                                                             │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.023  │ 0.024   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 10     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to challenge (s)'           │ 0.029  │ 0.029   │ '10/10'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 10     │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: question, burst: 1 (cpu profiled)                                                                                                              │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/10'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.022  │ 0.023   │ '10/10'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 10     │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: question, burst: 10                                                                                                                            │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/30'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.175  │ 1.639   │ '27/30'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 30     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/30'   │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to challenge (s)'           │ 0.143  │ 0.486   │ '30/30'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 30     │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: question, burst: 10 (cpu profiled)                                                                                                             │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/30'   │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 0.221  │ 0.21    │ '27/30'  │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 30     │ ''      │ ''       │
+│ publisher: libp2p js client, challenge: question, burst: 50                                                                                                                            │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/100'  │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to challenge (s)'           │ 1.118  │ 4.051   │ '72/100' │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 100    │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to verification (s)'        │ NaN    │ NaN     │ '0/100'  │
+│                                                                                                                                                                                        │ 'chrome' │ 'publish to challenge (s)'           │ 0.736  │ 2.092   │ '68/100' │
+│                                                                                                                                                                                        │ 'chrome' │ 'throughput publications per second' │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'succeeded'                          │ 0      │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'chrome' │ 'failed'                             │ 100    │ ''      │ ''       │
+│ publisher: kubo rpc, challenge: none, burst: 50, same author                                                                                                                           │          │                                      │        │         │          │
+│                                                                                                                                                                                        │ 'node'   │ 'publish to verification (s)'        │ 2.526  │ 4.371   │ '72/100' │
+│                                                                                                                                                                                        │ 'node'   │ 'warmup publish to verification (s)' │ 0.377  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'median publish to verification (s)' │ 2.526  │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'p95publish to verification (s)'     │ 12.412 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'max publish to verification (s)'    │ 12.425 │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'throughput publications per second' │ 0.6    │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'succeeded'                          │ 72     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'failed'                             │ 28     │ ''      │ ''       │
+│                                                                                                                                                                                        │ 'node'   │ 'community cpu per publication (ms)' │ 131.07 │ ''      │ ''       │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴──────────────────────────────────────┴────────┴─────────┴──────────┘
+  publisher: kubo rpc, challenge: none, burst: 1 (node) process: rss 226.59MB, heap after gc 70.93MB, cpu 1030ms, event loop p99 60.59ms max 97.26ms, gc 22ms | community: rss 275.64MB, heap after gc 90.24MB, cpu 556ms, event loop p99 19.48ms max 20.82ms, gc 12.5ms, kubo rss {"community":98.43}MB
+  publisher: kubo rpc, challenge: none, burst: 1 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 99.1ms max 99.1ms, gc -ms, long tasks 118ms | community: rss 331.61MB, heap after gc 116.38MB, cpu 1991ms, event loop p99 78.51ms max 94.44ms, gc 97.1ms, kubo rss {"community":104.78}MB
+  publisher: kubo rpc, challenge: none, burst: 10 (node) process: rss 229.39MB, heap after gc 71.83MB, cpu 2223ms, event loop p99 23.64ms max 98.89ms, gc 51.5ms | community: rss 276.24MB, heap after gc 90.34MB, cpu 1525ms, event loop p99 15.44ms max 45.55ms, gc 41.3ms, kubo rss {"community":98.67}MB
+  publisher: kubo rpc, challenge: none, burst: 50 (node) process: rss 300.63MB, heap after gc 69.36MB, cpu 8717ms, event loop p99 11.22ms max 855.64ms, gc 479.4ms | community: rss 276.58MB, heap after gc 89.76MB, cpu 7133ms, event loop p99 13.01ms max 100.93ms, gc 290ms, kubo rss {"community":100.11}MB
+  publisher: kubo rpc, challenge: question, burst: 1 (node) process: rss 225.91MB, heap after gc 67.94MB, cpu 636ms, event loop p99 91.88ms max 91.88ms, gc 7.8ms | community: rss 271.25MB, heap after gc 90.48MB, cpu 201ms, event loop p99 14.17ms max 14.17ms, gc 8.7ms, kubo rss {"community":100.11}MB
+  publisher: kubo rpc, challenge: question, burst: 1 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 36.9ms max 36.9ms, gc -ms, long tasks 0ms | community: rss 331.3MB, heap after gc 116.57MB, cpu 231ms, event loop p99 13.65ms max 13.65ms, gc 2.5ms, kubo rss {"community":105.7}MB
+  publisher: kubo rpc, challenge: question, burst: 1 (cpu profiled) (node) process: rss 222.57MB, heap after gc 67.98MB, cpu 648ms, event loop p99 27.51ms max 80.48ms, gc 7.6ms | community: rss 298.45MB, heap after gc 107.95MB, cpu 696ms, event loop p99 132.12ms max 132.12ms, gc 24.6ms, kubo rss {"community":100.11}MB | cpu profile (358ms sampled): (idle) 228ms, @noble/curves 33ms, (node) 27ms, (native) 13ms, @pkcprotocol/pkc-js 13ms, zod 9ms
+  publisher: kubo rpc, challenge: question, burst: 10 (node) process: rss 227.43MB, heap after gc 67.72MB, cpu 2601ms, event loop p99 11.21ms max 102.83ms, gc 97.2ms | community: rss 297.16MB, heap after gc 108.97MB, cpu 1657ms, event loop p99 11.23ms max 30.95ms, gc 52.3ms, kubo rss {"community":100.13}MB
+  publisher: kubo rpc, challenge: question, burst: 50 (node) process: rss 287.77MB, heap after gc 66.51MB, cpu 7301ms, event loop p99 11.35ms max 916.98ms, gc 319.6ms | community: rss 280.45MB, heap after gc 110.76MB, cpu 1803ms, event loop p99 11.32ms max 86.44ms, gc 118.6ms, kubo rss {"community":89.09}MB
+  publisher: libp2p js client, challenge: none, burst: 1 (node) process: rss 286.68MB, heap after gc 111.5MB, cpu 2801ms, event loop p99 101.52ms max 1297.09ms, gc 53.7ms | community: rss 306.2MB, heap after gc 111.55MB, cpu 1011ms, event loop p99 45.25ms max 45.25ms, gc 21.4ms, kubo rss {"community":95.25}MB
+  publisher: libp2p js client, challenge: none, burst: 1 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 127.1ms max 127.1ms, gc -ms, long tasks 237ms | community: rss 331.36MB, heap after gc 116.88MB, cpu 1591ms, event loop p99 84.54ms max 84.54ms, gc 69.2ms, kubo rss {"community":105.74}MB
+  publisher: libp2p js client, challenge: none, burst: 10 (node) process: rss 289.9MB, heap after gc 112.04MB, cpu 3720ms, event loop p99 19.94ms max 89.52ms, gc 92.7ms | community: rss 307.8MB, heap after gc 111.79MB, cpu 1760ms, event loop p99 17.84ms max 49.71ms, gc 54.1ms, kubo rss {"community":102.27}MB
+  publisher: libp2p js client, challenge: none, burst: 10 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 31.6ms max 153.5ms, gc -ms, long tasks 233ms | community: rss 379.46MB, heap after gc 117.33MB, cpu 1798ms, event loop p99 19.73ms max 73.07ms, gc 107.6ms, kubo rss {"community":106.42}MB
+  publisher: libp2p js client, challenge: none, burst: 50 (node) process: rss 316.55MB, heap after gc 113.09MB, cpu 7117ms, event loop p99 11.28ms max 208.54ms, gc 288.8ms | community: rss 326.1MB, heap after gc 112.33MB, cpu 6375ms, event loop p99 11.46ms max 132.78ms, gc 284.1ms, kubo rss {"community":106.73}MB
+  publisher: libp2p js client, challenge: none, burst: 50 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 3.6ms max 273.7ms, gc -ms, long tasks 431ms | community: rss 377.77MB, heap after gc 116.68MB, cpu 10484ms, event loop p99 11.67ms max 170.52ms, gc 570.1ms, kubo rss {"community":113.53}MB
+  publisher: libp2p js client, challenge: question, burst: 1 (node) process: rss 280.06MB, heap after gc 108.48MB, cpu 2511ms, event loop p99 1326.45ms max 1326.45ms, gc 51ms | community: rss 269.13MB, heap after gc 112.42MB, cpu 188ms, event loop p99 11.71ms max 11.71ms, gc 9.8ms, kubo rss {"community":106.73}MB
+  publisher: libp2p js client, challenge: question, burst: 1 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 15ms max 15ms, gc -ms, long tasks 0ms | community: rss 340.89MB, heap after gc 116.78MB, cpu 241ms, event loop p99 17.32ms max 17.32ms, gc 14.7ms, kubo rss {"community":107.58}MB
+  publisher: libp2p js client, challenge: question, burst: 1 (cpu profiled) (node) process: rss 280.51MB, heap after gc 108.68MB, cpu 2486ms, event loop p99 51.81ms max 1314.91ms, gc 47.6ms | community: rss 272.25MB, heap after gc 112.76MB, cpu 403ms, event loop p99 26.21ms max 26.21ms, gc 6.6ms, kubo rss {"community":106.73}MB | cpu profile (291ms sampled): (idle) 183ms, @noble/curves 37ms, (node) 18ms, zod 13ms, (garbage collector) 8ms, (native) 7ms
+  publisher: libp2p js client, challenge: question, burst: 10 (node) process: rss 286.92MB, heap after gc 109.17MB, cpu 3192ms, event loop p99 14.47ms max 57.48ms, gc 56.2ms | community: rss 280.63MB, heap after gc 113.67MB, cpu 649ms, event loop p99 11.23ms max 25.05ms, gc 24.6ms, kubo rss {"community":106.75}MB
+  publisher: libp2p js client, challenge: question, burst: 10 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 34.7ms max 83.6ms, gc -ms, long tasks 113ms | community: rss 341.09MB, heap after gc 117.64MB, cpu 509ms, event loop p99 15.18ms max 44.07ms, gc 26.4ms, kubo rss {"community":107.99}MB
+  publisher: libp2p js client, challenge: question, burst: 10 (cpu profiled) (node) process: rss 284.19MB, heap after gc 109.11MB, cpu 3051ms, event loop p99 54.92ms max 82.58ms, gc 68.9ms | community: rss 285.25MB, heap after gc 114.31MB, cpu 864ms, event loop p99 30.65ms max 35.29ms, gc 38.3ms, kubo rss {"community":106.75}MB | cpu profile (793ms sampled): (idle) 415ms, @noble/curves 119ms, (garbage collector) 59ms, zod 37ms, (node) 37ms, node-forge 29ms
+  publisher: libp2p js client, challenge: question, burst: 50 (node) process: rss 342.1MB, heap after gc 110.32MB, cpu 5432ms, event loop p99 28.92ms max 1305.48ms, gc 165.7ms | community: rss 306.88MB, heap after gc 116.54MB, cpu 1888ms, event loop p99 14.9ms max 119.28ms, gc 51.7ms, kubo rss {"community":105.57}MB
+  publisher: libp2p js client, challenge: question, burst: 50 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 56.5ms max 230.3ms, gc -ms, long tasks 201ms | community: rss 341.38MB, heap after gc 119.14MB, cpu 2084ms, event loop p99 13.89ms max 140.64ms, gc 65.1ms, kubo rss {"community":108.93}MB
+  publisher: kubo rpc, challenge: none, burst: 50, same author (node) process: rss 302.39MB, heap after gc 69.37MB, cpu 8917ms, event loop p99 11.23ms max 907.54ms, gc 494.2ms | community: rss 333.79MB, heap after gc 116.47MB, cpu 9437ms, event loop p99 14.67ms max 107.87ms, gc 481.6ms, kubo rss {"community":107.84}MB
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                                                                                                         │ runtime  │ benchmark         │ median │ average │ success │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ FETCH IPNS                                                                                                      │          │                   │        │         │         │
+│                                                                                                                 │          │                   │        │         │         │
+│                                                                                                                 │          │                   │        │         │         │
+│ https://ipfsgateway.xyz (possibly not cached) [environment-dependent]                                           │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.029  │ 0.03    │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.026  │ 0.026   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ https://ipfsgateway.xyz [environment-dependent]                                                                 │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.029  │ 0.029   │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.027  │ 0.027   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ https://gateway.plebpubsub.xyz [environment-dependent]                                                          │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.026  │ 0.026   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ https://gateway.forumindex.com [environment-dependent]                                                          │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.029  │ 0.029   │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.026  │ 0.026   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ https://ipfsgateway.xyz, https://gateway.plebpubsub.xyz, https://gateway.forumindex.com [environment-dependent] │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.034  │ 0.034   │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ NaN    │ NaN     │ '0/28'  │
+│ libp2p js client [environment-dependent]                                                                        │          │                   │        │         │         │
+│                                                                                                                 │ 'node'   │ 'resolve address' │ 0.065  │ 0.063   │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipns'      │ 1.806  │ 1.886   │ '28/28' │
+│                                                                                                                 │ 'node'   │ 'fetch ipfs'      │ 3.705  │ 3.676   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'resolve address' │ 0.04   │ 0.04    │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipns'      │ 1.198  │ 1.191   │ '28/28' │
+│                                                                                                                 │ 'chrome' │ 'fetch ipfs'      │ 3.334  │ 3.985   │ '28/28' │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+  https://ipfsgateway.xyz (possibly not cached) (node) process: rss 253.72MB, heap after gc 89.45MB, cpu 2278ms, event loop p99 11.15ms max 43.19ms, gc 50.3ms
+  https://ipfsgateway.xyz (possibly not cached) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.5ms max 136.9ms, gc -ms, long tasks 204ms
+  https://ipfsgateway.xyz (node) process: rss 256.34MB, heap after gc 89.17MB, cpu 2508ms, event loop p99 11.17ms max 89.33ms, gc 73.9ms
+  https://ipfsgateway.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.4ms max 151.5ms, gc -ms, long tasks 223ms
+  https://gateway.plebpubsub.xyz (node) process: rss 258.58MB, heap after gc 89.57MB, cpu 1566ms, event loop p99 12.03ms max 99.81ms, gc 34ms
+  https://gateway.plebpubsub.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2ms max 151.3ms, gc -ms, long tasks 222ms
+  https://gateway.forumindex.com (node) process: rss 256.48MB, heap after gc 89.61MB, cpu 1533ms, event loop p99 11.44ms max 92.34ms, gc 29.8ms
+  https://gateway.forumindex.com (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 3.2ms max 170.9ms, gc -ms, long tasks 223ms
+  https://ipfsgateway.xyz, https://gateway.plebpubsub.xyz, https://gateway.forumindex.com (node) process: rss 268.33MB, heap after gc 89.84MB, cpu 2607ms, event loop p99 11.38ms max 194.77ms, gc 61.7ms
+  https://ipfsgateway.xyz, https://gateway.plebpubsub.xyz, https://gateway.forumindex.com (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 1.9ms max 167.6ms, gc -ms, long tasks 230ms
+  libp2p js client (node) process: rss 490.65MB, heap after gc 164.32MB, cpu 8268ms, event loop p99 195.82ms max 401.6ms, gc 286.5ms
+  libp2p js client (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 179.3ms max 233.2ms, gc -ms, long tasks 688ms
+┌────────────────────────────────────────────────────────────────────────────┬──────────┬─────────────────────────────┬─────────────────────────────────────────────────┬─────────┬─────────┐
+│ (index)                                                                    │ runtime  │ benchmark                   │ median                                          │ average │ success │
+├────────────────────────────────────────────────────────────────────────────┼──────────┼─────────────────────────────┼─────────────────────────────────────────────────┼─────────┼─────────┤
+│ FETCH COMMENT                                                              │          │                             │                                                 │         │         │
+│                                                                            │          │                             │                                                 │         │         │
+│                                                                            │          │                             │                                                 │         │         │
+│ ipfsgateway.xyz (1 post) [environment-dependent]                           │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ ipfsgateway.xyz (1 reply) [environment-dependent]                          │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ ipfsgateway.xyz (1 sub, 5 posts, 5 replies) [environment-dependent]        │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ ipfsgateway.xyz (10 subs, 5 posts, 5 replies) [environment-dependent]      │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ libp2p js client (1 post) [environment-dependent]                          │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ libp2p js client (1 reply) [environment-dependent]                         │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ libp2p js client (1 sub, 5 posts, 5 replies) [environment-dependent]       │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│ libp2p js client (10 subs, 5 posts, 5 replies) [environment-dependent]     │          │                             │                                                 │         │         │
+│                                                                            │ 'node'   │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'node'   │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'node'   │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'error'                     │ 'cell exited (code 1) without writing a report' │ ''      │ ''      │
+│                                                                            │ 'chrome' │ 'fetch comment ipfs'        │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'resolve community address' │ NaN                                             │ NaN     │ '0/0'   │
+│                                                                            │ 'chrome' │ 'fetch comment update'      │ NaN                                             │ NaN     │ '0/0'   │
+└────────────────────────────────────────────────────────────────────────────┴──────────┴─────────────────────────────┴─────────────────────────────────────────────────┴─────────┴─────────┘
+┌──────────────────────────────────────────────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                                                          │ runtime  │ benchmark         │ median │ average │ success │
+├──────────────────────────────────────────────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ RESOLVE ADDRESSES                                                │          │                   │        │         │         │
+│                                                                  │          │                   │        │         │         │
+│                                                                  │          │                   │        │         │         │
+│ https://ethrpc.xyz (possibly not cached) [environment-dependent] │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.029  │ 0.029   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.028  │ 0.028   │ '28/28' │
+│ https://ethrpc.xyz [environment-dependent]                       │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.031  │ 0.031   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│ wss://ethrpc.xyz (possibly not cached) [environment-dependent]   │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.027  │ 0.027   │ '28/28' │
+│ wss://ethrpc.xyz [environment-dependent]                         │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.028  │ 0.028   │ '28/28' │
+│ https://ethrpc.xyz, viem, ethers.js [environment-dependent]      │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.03   │ 0.031   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.028  │ 0.028   │ '28/28' │
+│ viem [environment-dependent]                                     │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.03   │ 0.031   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.028  │ 0.028   │ '28/28' │
+│ ethers.js [environment-dependent]                                │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.026  │ 0.027   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.027  │ 0.027   │ '28/28' │
+│ https://solrpc.xyz [environment-dependent]                       │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.034  │ 0.034   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.026  │ 0.027   │ '28/28' │
+│ wss://solrpc.xyz (wss not implemented) [environment-dependent]   │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.029  │ 0.029   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.029  │ 0.029   │ '28/28' │
+│ web3.js [environment-dependent]                                  │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.026  │ 0.026   │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.026  │ 0.026   │ '28/28' │
+│ https://solrpc.xyz, web3.js [environment-dependent]              │          │                   │        │         │         │
+│                                                                  │ 'node'   │ 'resolve address' │ 0.03   │ 0.03    │ '28/28' │
+│                                                                  │ 'chrome' │ 'resolve address' │ 0.028  │ 0.027   │ '28/28' │
+└──────────────────────────────────────────────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+  https://ethrpc.xyz (possibly not cached) (node) process: rss 202.08MB, heap after gc 63.34MB, cpu 88ms, event loop p99 -ms max -ms, gc 0ms
+  https://ethrpc.xyz (possibly not cached) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2.1ms max 2.1ms, gc -ms, long tasks 0ms
+  https://ethrpc.xyz (node) process: rss 202.44MB, heap after gc 63.35MB, cpu 95ms, event loop p99 -ms max -ms, gc 0ms
+  https://ethrpc.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.2ms max 0.2ms, gc -ms, long tasks 0ms
+  wss://ethrpc.xyz (possibly not cached) (node) process: rss 206.79MB, heap after gc 63.34MB, cpu 93ms, event loop p99 -ms max -ms, gc 0ms
+  wss://ethrpc.xyz (possibly not cached) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 1.4ms max 1.4ms, gc -ms, long tasks 0ms
+  wss://ethrpc.xyz (node) process: rss 201.71MB, heap after gc 63.34MB, cpu 89ms, event loop p99 -ms max -ms, gc 0ms
+  wss://ethrpc.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 4.6ms max 4.6ms, gc -ms, long tasks 0ms
+  https://ethrpc.xyz, viem, ethers.js (node) process: rss 206.16MB, heap after gc 63.36MB, cpu 92ms, event loop p99 -ms max -ms, gc 0ms
+  https://ethrpc.xyz, viem, ethers.js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2.6ms max 2.6ms, gc -ms, long tasks 0ms
+  viem (node) process: rss 201.96MB, heap after gc 63.34MB, cpu 93ms, event loop p99 -ms max -ms, gc 0ms
+  viem (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.3ms max 0.3ms, gc -ms, long tasks 0ms
+  ethers.js (node) process: rss 206.31MB, heap after gc 63.16MB, cpu 89ms, event loop p99 -ms max -ms, gc 0ms
+  ethers.js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2ms max 2ms, gc -ms, long tasks 0ms
+  https://solrpc.xyz (node) process: rss 205.5MB, heap after gc 63.34MB, cpu 98ms, event loop p99 -ms max -ms, gc 0ms
+  https://solrpc.xyz (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2.3ms max 2.3ms, gc -ms, long tasks 0ms
+  wss://solrpc.xyz (wss not implemented) (node) process: rss 201.46MB, heap after gc 63.34MB, cpu 86ms, event loop p99 -ms max -ms, gc 0ms
+  wss://solrpc.xyz (wss not implemented) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 2.8ms max 2.8ms, gc -ms, long tasks 0ms
+  web3.js (node) process: rss 206.46MB, heap after gc 63.16MB, cpu 87ms, event loop p99 -ms max -ms, gc 0ms
+  web3.js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.2ms max 0.2ms, gc -ms, long tasks 0ms
+  https://solrpc.xyz, web3.js (node) process: rss 201.98MB, heap after gc 63.36MB, cpu 88ms, event loop p99 -ms max -ms, gc 0ms
+  https://solrpc.xyz, web3.js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 1.1ms max 1.1ms, gc -ms, long tasks 0ms
+┌────────────────────────────────────────────────┬──────────┬───────────────────┬────────┬─────────┬─────────┐
+│ (index)                                        │ runtime  │ benchmark         │ median │ average │ success │
+├────────────────────────────────────────────────┼──────────┼───────────────────┼────────┼─────────┼─────────┤
+│ LOAD COMMUNITIES                               │          │                   │        │         │         │
+│                                                │          │                   │        │         │         │
+│                                                │          │                   │        │         │         │
+│ libp2pjs concurrency=1 [environment-dependent] │          │                   │        │         │         │
+│                                                │ 'node'   │ 'resolve address' │ 0.002  │ 0.002   │ '68/68' │
+│                                                │ 'node'   │ 'fetch ipns'      │ 0.144  │ 0.156   │ '68/68' │
+│                                                │ 'node'   │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/68'  │
+│                                                │ 'node'   │ 'total load time' │ 0.367  │ 0.555   │ '68/68' │
+│                                                │ 'chrome' │ 'resolve address' │ 0.001  │ 0.001   │ '68/68' │
+│                                                │ 'chrome' │ 'fetch ipns'      │ 0.139  │ 0.149   │ '68/68' │
+│                                                │ 'chrome' │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/68'  │
+│                                                │ 'chrome' │ 'total load time' │ 0.388  │ 0.548   │ '68/68' │
+│ libp2pjs concurrency=4 [environment-dependent] │          │                   │        │         │         │
+│                                                │ 'node'   │ 'resolve address' │ 0.002  │ 0.003   │ '68/68' │
+│                                                │ 'node'   │ 'fetch ipns'      │ 0.177  │ 0.226   │ '68/68' │
+│                                                │ 'node'   │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/68'  │
+│                                                │ 'node'   │ 'total load time' │ 0.227  │ 0.306   │ '68/68' │
+│                                                │ 'chrome' │ 'resolve address' │ 0.001  │ 0.002   │ '68/68' │
+│                                                │ 'chrome' │ 'fetch ipns'      │ 0.195  │ 0.259   │ '68/68' │
+│                                                │ 'chrome' │ 'fetch ipfs'      │ NaN    │ NaN     │ '0/68'  │
+│                                                │ 'chrome' │ 'total load time' │ 0.629  │ 0.803   │ '68/68' │
+└────────────────────────────────────────────────┴──────────┴───────────────────┴────────┴─────────┴─────────┘
+  libp2pjs concurrency=1 (node): loaded 68/68 attempted (68 discovered)
+    final peers: 4 (browser-usable=2) {"tcp":2,"wss":2}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipfs=27.13s(72%) fetching-ipns=10.50s(28%)
+  libp2pjs concurrency=1 (chrome): loaded 68/68 attempted (68 discovered)
+    final peers: 4 (browser-usable=4) {"wss":4}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipfs=27.13s(73%) fetching-ipns=10.03s(27%)
+  libp2pjs concurrency=4 (node): loaded 68/68 attempted (68 discovered)
+    final peers: 4 (browser-usable=2) {"wss":2,"tcp":2}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipns=15.14s(73%) fetching-ipfs=5.48s(27%)
+  libp2pjs concurrency=4 (chrome): loaded 68/68 attempted (68 discovered)
+    final peers: 4 (browser-usable=4) {"wss":4}
+    denied non-browser dials: 0 {}
+    phase breakdown: fetching-ipfs=36.94s(68%) fetching-ipns=17.51s(32%)
+  libp2pjs concurrency=1 (node) process: rss 494.73MB, heap after gc 149.08MB, cpu 10745ms, event loop p99 24.13ms max 91.03ms, gc 365.6ms
+  libp2pjs concurrency=1 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 30.9ms max 71.3ms, gc -ms, long tasks 755ms
+  libp2pjs concurrency=4 (node) process: rss 489.95MB, heap after gc 144.9MB, cpu 8771ms, event loop p99 72.81ms max 104.14ms, gc 387.5ms
+  libp2pjs concurrency=4 (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 70.7ms max 82.1ms, gc -ms, long tasks 764ms
+┌─────────────────────────────────────────────────────────────────────────────┬──────────┬──────────────┬────────┬─────────┬─────────┐
+│ (index)                                                                     │ runtime  │ benchmark    │ median │ average │ success │
+├─────────────────────────────────────────────────────────────────────────────┼──────────┼──────────────┼────────┼─────────┼─────────┤
+│ GATEWAY FETCH IPNS                                                          │          │              │        │         │         │
+│                                                                             │          │              │        │         │         │
+│                                                                             │          │              │        │         │         │
+│ https://ipfsgateway.xyz (gateway fetch only) [environment-dependent]        │          │              │        │         │         │
+│                                                                             │ 'node'   │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│                                                                             │ 'chrome' │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│ https://gateway.plebpubsub.xyz (gateway fetch only) [environment-dependent] │          │              │        │         │         │
+│                                                                             │ 'node'   │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│                                                                             │ 'chrome' │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│ https://gateway.forumindex.com (gateway fetch only) [environment-dependent] │          │              │        │         │         │
+│                                                                             │ 'node'   │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+│                                                                             │ 'chrome' │ 'fetch ipns' │ NaN    │ NaN     │ '0/28'  │
+└─────────────────────────────────────────────────────────────────────────────┴──────────┴──────────────┴────────┴─────────┴─────────┘
+  https://ipfsgateway.xyz (gateway fetch only) (node) process: rss 78.55MB, heap after gc 12.54MB, cpu 353ms, event loop p99 10.47ms max 46.04ms, gc 7.5ms
+  https://ipfsgateway.xyz (gateway fetch only) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.1ms max 0.2ms, gc -ms, long tasks 0ms
+  https://gateway.plebpubsub.xyz (gateway fetch only) (node) process: rss 84.89MB, heap after gc 12.58MB, cpu 231ms, event loop p99 42.96ms max 42.96ms, gc 1.5ms
+  https://gateway.plebpubsub.xyz (gateway fetch only) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.2ms max 0.2ms, gc -ms, long tasks 0ms
+  https://gateway.forumindex.com (gateway fetch only) (node) process: rss 81.86MB, heap after gc 12.58MB, cpu 231ms, event loop p99 39.78ms max 39.78ms, gc 1.4ms
+  https://gateway.forumindex.com (gateway fetch only) (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 0.7ms max 0.7ms, gc -ms, long tasks 0ms
+┌─────────────────────┬──────────┬───────────────────────────┬────────┬─────────┬─────────┐
+│ (index)             │ runtime  │ benchmark                 │ median │ average │ success │
+├─────────────────────┼──────────┼───────────────────────────┼────────┼─────────┼─────────┤
+│ IMPORT TIME         │          │                           │        │         │         │
+│                     │          │                           │        │         │         │
+│                     │          │                           │        │         │         │
+│ @pkcprotocol/pkc-js │          │                           │        │         │         │
+│                     │ 'node'   │ 'cold import (s)'         │ 0.619  │ 0.624   │ '10/10' │
+│                     │ 'node'   │ 'warm import (s)'         │ 0.462  │ 0.46    │ '10/10' │
+│                     │ 'node'   │ 'median cold import (s)'  │ 0.619  │ ''      │ ''      │
+│                     │ 'node'   │ 'median warm import (s)'  │ 0.461  │ ''      │ ''      │
+│                     │ 'node'   │ 'median node startup (s)' │ 0.027  │ ''      │ ''      │
+│                     │ 'node'   │ 'loaded modules'          │ 471    │ ''      │ ''      │
+│                     │ 'node'   │ 'packed tarball (MB)'     │ 4.1    │ ''      │ ''      │
+│                     │ 'node'   │ 'unpacked (MB)'           │ 21.29  │ ''      │ ''      │
+│                     │ 'node'   │ 'tarball files'           │ 1302   │ ''      │ ''      │
+│                     │ 'chrome' │ 'browser import (s)'      │ 1.649  │ 1.649   │ '1/1'   │
+└─────────────────────┴──────────┴───────────────────────────┴────────┴─────────┴─────────┘
+  @pkcprotocol/pkc-js (node) process: rss 83.7MB, heap after gc 12.1MB, cpu 517ms, event loop p99 11.82ms max 18.24ms, gc 11.6ms
+  @pkcprotocol/pkc-js (chrome) process: rss -MB, heap after gc -MB, cpu -ms, event loop p99 1.1ms max 1.1ms, gc -ms, long tasks 0ms
+┌──────────────────────────────────────────────────┬─────────┬─────────────────────────────┬─────────┬─────────┬─────────┐
+│ (index)                                          │ runtime │ benchmark                   │ median  │ average │ success │
+├──────────────────────────────────────────────────┼─────────┼─────────────────────────────┼─────────┼─────────┼─────────┤
+│ SEEDED BOARD                                     │         │                             │         │         │         │
+│                                                  │         │                             │         │         │         │
+│                                                  │         │                             │         │         │         │
+│ board S, default sorts                           │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.093   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 130.114 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 139.253 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 0.951   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 1.145   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.83   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 127.22  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 1.144   │ 1.107   │ '4/4'   │
+│ board S, default sorts (cpu profiled)            │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.082   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 131.456 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 140.693 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 0.954   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 1.185   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.83   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 127.22  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 1.173   │ 1.134   │ '4/4'   │
+│ board S, posts: active only                      │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.077   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 130.203 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 138.75  │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 0.523   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 0.736   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.83   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 73.67   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'settings edit (s)'         │ 0.011   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 0.736   │ 0.685   │ '4/4'   │
+│ board S, posts: hot only, replies: best only     │         │                             │         │         │         │
+│                                                  │ 'node'  │ 'create community (s)'      │ 0.085   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start (s)'                 │ 130.346 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'start to first update (s)' │ 138.587 │ ''      │ ''      │
+│                                                  │ 'node'  │ 'first post to record (s)'  │ 0.514   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'median post to record (s)' │ 0.713   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'db size (MB)'              │ 51.83   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'ipfs repo growth (MB)'     │ 73.68   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture posts'             │ 300     │ ''      │ ''      │
+│                                                  │ 'node'  │ 'fixture comments'          │ 15874   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'settings edit (s)'         │ 0.011   │ ''      │ ''      │
+│                                                  │ 'node'  │ 'post to record (s)'        │ 0.706   │ 0.665   │ '4/4'   │
+└──────────────────────────────────────────────────┴─────────┴─────────────────────────────┴─────────┴─────────┴─────────┘
+  board S, default sorts (node) process: rss 867.48MB, heap after gc 86.41MB, cpu 152172ms, event loop p99 88.15ms max 89187.68ms, gc 2677.8ms
+  board S, default sorts (cpu profiled) (node) process: rss 883.48MB, heap after gc 88.19MB, cpu 158948ms, event loop p99 90.44ms max 90462.75ms, gc 2923.5ms | cpu profile (150377ms sampled): @pkcprotocol/pkc-js 97362ms, (node) 15226ms, (idle) 10754ms, (native) 7278ms, (garbage collector) 3222ms, zod 2864ms
+  board S, posts: active only (node) process: rss 623.17MB, heap after gc 86.4MB, cpu 149582ms, event loop p99 69.99ms max 89657.44ms, gc 2311.5ms
+  board S, posts: hot only, replies: best only (node) process: rss 609.69MB, heap after gc 86.19MB, cpu 149394ms, event loop p99 64.88ms max 89858.77ms, gc 2341.7ms
+┌──────────────────────────────────────────────┐
+│ (index)                                      │
+├──────────────────────────────────────────────┤
+│ RPC COMMUNITY LIST                           │
+│                                              │
+│                                              │
+│ 10 communities, 20 posts each                │
+│ 10 communities, 20 posts each (cpu profiled) │
+└──────────────────────────────────────────────┘
+  10 communities, 20 posts each (node) process: rss 367.63MB, heap after gc 74.61MB, cpu 11155ms, event loop p99 16.38ms max 126.16ms, gc 243.9ms
+  10 communities, 20 posts each (cpu profiled) (node) process: rss 296.94MB, heap after gc 68.2MB, cpu 13615ms, event loop p99 19.38ms max 122.22ms, gc 299.9ms | cpu profile (13763ms sampled): (idle) 2965ms, (node) 2441ms, @noble/curves 2129ms, @pkcprotocol/pkc-js 1208ms, (native) 765ms, zod 570ms
